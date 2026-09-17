@@ -1,7 +1,7 @@
-const { createMemoryHistoryStore } = require('../lib/history-store');
+const { getHistoryStore } = require('../lib/history-store');
 
-// MVP 1.0b — process-local adapter. Durable storage remains a separate step.
-const store = createMemoryHistoryStore();
+// MVP 1.0c — shared process-local adapter. Durable storage remains a separate step.
+const store = getHistoryStore();
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') {
@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     const records = await store.list(url);
     return res.status(200).json({
       ok: true,
-      version: '1.0b',
+      version: '1.0c',
       storage: 'memory-only',
       durable: false,
       count: records.length,
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
       const saved = await store.append(record);
       return res.status(201).json({
         ok: true,
-        version: '1.0b',
+        version: '1.0c',
         storage: 'memory-only',
         durable: false,
         record: saved
