@@ -7,6 +7,9 @@ const SOURCES = [
 ];
 
 const { makeHistoryRecord } = require('../lib/history-engine');
+const { getHistoryStore } = require('../lib/history-store');
+
+const store = getHistoryStore();
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -17,7 +20,7 @@ module.exports = async (req, res) => {
       const r = await fetch(url, {
         method: 'GET',
         redirect: 'manual',
-        headers: { 'User-Agent': 'AI-Opportunity-Radar-Recheck/0.9', 'Range': 'bytes=0-2048' }
+        headers: { 'User-Agent': 'AI-Opportunity-Radar-Recheck/1.0c', 'Range': 'bytes=0-2048' }
       });
       return { url, reachable: r.status >= 200 && r.status < 400, status: r.status, latencyMs: Date.now() - started };
     } catch (error) {
@@ -26,16 +29,27 @@ module.exports = async (req, res) => {
   }));
 
   const checkedAt = new Date().toISOString();
-  const history = results.map(result => makeHistoryRecord({ ...result, checkedAt }));
+  const history = [];
+
+  for (const result of results) {
+    const snapshot = { ...result, checkedAt };
+    const previousRecord = await store.getLatest(result.url);
+    const previousSnapshot = previousRecord ? previousRecord.snapshot : null;
+    const record = makeHistoryRecord(snapshot, previousSnapshot);
+    await store.append(record);
+    history.push(record);
+  }
 
   return res.status(200).json({
     ok: true,
-    version: '0.9',
+    version: '1.0c',
+    storage: 'memory-only',
+    durable: false,
     checkedAt,
     count: results.length,
     reachable: results.filter(x => x.reachable).length,
     results,
     history,
-    note: 'History is normalized in-process only. Persistent storage is not configured. Reachability does not confirm job availability, eligibility, compensation, or hiring status.'
+    note: 'History is shared within the current process only. Persistent storage is not configured. Reachability does not confirm job availability, eligibility, compensation, or hiring status.'
   });
 };
