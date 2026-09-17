@@ -1,7 +1,6 @@
 const { createMemoryHistoryStore } = require('../lib/history-store');
 
-// Process-local adapter for MVP 1.0. It is intentionally non-durable.
-// Replace this adapter with Blob/database storage before claiming persistence.
+// MVP 1.0b — process-local adapter. Durable storage remains a separate step.
 const store = createMemoryHistoryStore();
 
 module.exports = async (req, res) => {
@@ -10,7 +9,7 @@ module.exports = async (req, res) => {
     const records = await store.list(url);
     return res.status(200).json({
       ok: true,
-      version: '1.0',
+      version: '1.0b',
       storage: 'memory-only',
       durable: false,
       count: records.length,
@@ -25,11 +24,10 @@ module.exports = async (req, res) => {
       const saved = await store.append(record);
       return res.status(201).json({
         ok: true,
-        version: '1.0',
+        version: '1.0b',
         storage: 'memory-only',
         durable: false,
-        record: saved,
-        note: 'Record exists only for the lifetime of this serverless process.'
+        record: saved
       });
     } catch (error) {
       return res.status(400).json({ ok: false, error: error instanceof Error ? error.message : 'Invalid record' });
