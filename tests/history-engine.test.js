@@ -15,6 +15,14 @@ assert.deepEqual(normalizeSnapshot({ url: 123, reachable: 'yes', status: '200' }
   checkedAt: null
 });
 
+assert.deepEqual(normalizeSnapshot(null), {
+  url: null,
+  reachable: null,
+  status: null,
+  checkedAt: null
+});
+
+assert.deepEqual(diffSnapshots(null, first).changes, ['URL_CHANGED', 'REACHABILITY_CHANGED', 'HTTP_STATUS_CHANGED']);
 assert.deepEqual(diffSnapshots(first, down).changes, ['SOURCE_DOWN', 'HTTP_STATUS_CHANGED']);
 assert.deepEqual(diffSnapshots(down, recovered).changes, ['SOURCE_RECOVERED', 'HTTP_STATUS_CHANGED']);
 assert.deepEqual(diffSnapshots(first, first).changes, []);
