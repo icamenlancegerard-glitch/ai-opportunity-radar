@@ -1,5 +1,6 @@
 const { makeHistoryRecord } = require('../lib/history-engine');
 const { getHistoryStore } = require('../lib/history-store');
+const { makeOpportunityStatus } = require('../lib/opportunity-status');
 
 const store = getHistoryStore();
 
@@ -8,7 +9,8 @@ async function saveSnapshot(snapshot) {
   const previousSnapshot = previousRecord ? previousRecord.snapshot : null;
   const history = makeHistoryRecord(snapshot, previousSnapshot);
   await store.append(history);
-  return { previous: previousSnapshot, history };
+  const opportunityStatus = makeOpportunityStatus(snapshot, previousSnapshot, history);
+  return { previous: previousSnapshot, history, opportunityStatus };
 }
 
 module.exports = async (req, res) => {
@@ -30,7 +32,7 @@ module.exports = async (req, res) => {
     const r = await fetch(parsed.toString(), {
       method: 'GET',
       redirect: 'manual',
-      headers: { 'User-Agent': 'AI-Opportunity-Radar-Recheck/1.0b', 'Range': 'bytes=0-2048' }
+      headers: { 'User-Agent': 'AI-Opportunity-Radar-Recheck/1.4', 'Range': 'bytes=0-2048' }
     });
     const checkedAt = new Date().toISOString();
     const snapshot = {
@@ -43,12 +45,12 @@ module.exports = async (req, res) => {
     const saved = await saveSnapshot(snapshot);
     return res.status(200).json({
       ok: true,
-      version: '1.0b',
+      version: '1.4',
       snapshot,
       ...saved,
       storage: 'memory-only',
       durable: false,
-      note: 'Change detection is now wired to process-local history. Reachability does not confirm job availability, eligibility, compensation, or hiring status.'
+      note: 'Opportunity status reflects source evidence and change detection only. It does not confirm job availability, eligibility, compensation, or hiring status.'
     });
   } catch (error) {
     const checkedAt = new Date().toISOString();
@@ -63,7 +65,7 @@ module.exports = async (req, res) => {
     const saved = await saveSnapshot(snapshot);
     return res.status(200).json({
       ok: true,
-      version: '1.0b',
+      version: '1.4',
       snapshot,
       ...saved,
       storage: 'memory-only',
