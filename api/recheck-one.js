@@ -1,5 +1,6 @@
 const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { getHistoryStorageStatus } = require('../lib/history-store');
+const { makeChangeAlerts } = require('../lib/change-alerts');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -9,13 +10,15 @@ module.exports = async (req, res) => {
   try {
     const result = await recheckAndRecord(url);
     const storage = getHistoryStorageStatus();
+    const alerts = makeChangeAlerts(result.history);
     return res.status(200).json({
       ok: true,
-      version: '1.8',
+      version: '2.0',
       ...result,
+      alerts,
       storage: storage.storage,
       durable: storage.durable,
-      note: 'The canonical pipeline derives explicit availability, Philippines eligibility, and compensation evidence from bounded source text. These evidence states do not guarantee hiring, eligibility, compensation, or continued availability.'
+      note: 'The canonical pipeline derives evidence, history, and deterministic change alerts. Alerts summarize evidence changes; they do not guarantee hiring, eligibility, compensation, or continued availability.'
     });
   } catch (error) {
     const status = error && error.code === 'SOURCE_POLICY_REJECTED'
