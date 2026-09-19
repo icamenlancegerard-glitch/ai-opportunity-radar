@@ -6,14 +6,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ ok: false, error: 'GET only' });
   }
 
-  const storage = getHistoryStorageStatus();
   const url = typeof req.query?.url === 'string' ? req.query.url : '';
+  if (!url) {
+    return res.status(400).json({ ok: false, error: 'Missing url' });
+  }
+
+  const storage = getHistoryStorageStatus();
 
   try {
-    const store = getHistoryStore();
-    const records = url
-      ? await store.list(validateSourceUrl(url).toString())
-      : await store.list();
+    const canonicalUrl = validateSourceUrl(url).toString();
+    const records = await getHistoryStore().list(canonicalUrl);
 
     return res.status(200).json({
       ok: true,
@@ -21,6 +23,7 @@ module.exports = async (req, res) => {
       storage: storage.storage,
       durable: storage.durable,
       configured: storage.configured,
+      url: canonicalUrl,
       count: records.length,
       records,
       note: storage.durable
