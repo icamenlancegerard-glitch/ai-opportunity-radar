@@ -1,0 +1,27 @@
+name: MVP 2.2 Radar Control Plane Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run saved-search store tests
+        run: node tests/saved-search-store.test.js
+      - name: Run saved-search API tests
+        run: node tests/saved-searches-api.test.js
+      - name: Run monitored alert inbox tests
+        run: node tests/alerts-all.test.js
+      - name: Run change alert tests
+        run: node tests/change-alerts.test.js
+      - name: Run history store tests
+        run: node tests/history-store.test.js
