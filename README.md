@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.0 — evidence-first opportunity monitoring**
+**MVP 2.2 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -58,3 +58,23 @@ Freshness is a prioritization signal, not a truth claim.
 
 ## Separation
 This project is separate from AI HITS and does not modify the AI HITS repositories.
+
+
+## MVP 2.2 — alert center + server sync
+
+The browser UI now:
+- generates a per-browser owner identifier for saved-search sync
+- loads saved searches from the server API and keeps a local fallback
+- saves new searches to the server API when available
+- exposes a read-only Alert Center for the currently monitored sources
+
+The Alert Center reads deterministic recorded change events. It does not send email, push, SMS, or other external notifications.
+
+Server-side saved-search storage remains honest:
+- without `RADAR_SAVED_SEARCH_STORE_URL`, storage is memory-only and `durable:false`
+- the browser owner ID is not authentication
+- production identity/authentication is still a separate step
+
+## Verification boundary
+
+A green code/test result does not prove production durability or deployment availability. Those remain `not verified` until the configured provider and deployment can be exercised successfully.
