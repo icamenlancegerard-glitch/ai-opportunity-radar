@@ -8,7 +8,7 @@ const { routeAlertsForOwner } = require('../lib/alert-routing');
 const { isAuthorizedCron } = require('../lib/cron-auth');
 const { calculateNextRunAt, isDue } = require('../lib/monitor-schedules');
 
-// MVP 3.1 — protected scheduler for authenticated user-owned monitoring rules.
+// MVP 3.2 — protected scheduler for authenticated user-owned monitoring rules and subscription-aware delivery routing.
 // The scheduler tick itself is platform-driven. A schedule records desired cadence;
 // it does not guarantee exact wall-clock execution.
 
@@ -26,8 +26,16 @@ async function runUserMonitorScheduler({
     ? await store.listDue(now)
     : [];
 
+  const normalizedSources = sources
+    .map(source => typeof source === 'string'
+      ? { id: null, url: source, name: null }
+      : source)
+    .filter(source => source && typeof source.url === 'string');
+
   const activeSources = new Map(
-    sources.map(source => [typeof source === 'string' ? source : source.id, typeof source === 'string' ? source : source.url])
+    normalizedSources
+      .filter(source => typeof source.id === 'string')
+      .map(source => [source.id, source])
   );
 
   let processed = 0;
