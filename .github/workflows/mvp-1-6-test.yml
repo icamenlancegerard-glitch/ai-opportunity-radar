@@ -1,4 +1,4 @@
-name: MVP 1.8 Evidence Tests
+name: MVP 1.9 Evidence Tests
 
 on:
   push:
@@ -21,6 +21,8 @@ jobs:
         run: node tests/ph-eligibility-evidence.test.js
       - name: Run compensation evidence tests
         run: node tests/compensation-evidence.test.js
+      - name: Run history store tests
+        run: node tests/history-store.test.js
       - name: Run history engine tests
         run: node tests/history-engine.test.js
       - name: Run opportunity status tests
