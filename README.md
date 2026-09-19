@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.4 — evidence-first opportunity monitoring**
+**MVP 2.6 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -196,3 +196,49 @@ MVP 2.5 is **at-least-once** rather than exactly-once. A delivery provider shoul
 3. Production notification provider exercise
 4. Monitored-source lifecycle management and URL canonicalization
 5. User-configurable schedules
+
+
+## MVP 2.6 — monitored-source lifecycle
+
+The Radar now keeps monitored sources in a stable lifecycle registry instead of treating the scheduled source list as an anonymous array.
+
+Each source has:
+- stable lowercase source ID
+- human-readable name
+- canonical HTTPS URL
+- lifecycle state: `active`, `paused`, or `retired`
+
+Only `active` sources are returned to the scheduled monitor. The registry validates duplicate IDs and duplicate canonical URLs before startup.
+
+A read-only registry surface is available at `/api/monitored-sources`. Lifecycle mutation is intentionally configuration-backed for now; a durable management API is not claimed.
+
+### URL canonicalization
+
+Source URLs now canonicalize deterministically by:
+- requiring HTTPS
+- blocking embedded credentials
+- enforcing the existing host allowlist
+- removing fragments
+- normalizing hostname casing
+- removing the default HTTPS port
+- sorting query parameters
+
+Tracking parameters are not silently stripped because their meaning is source-specific and removing them could change the requested resource.
+
+### MVP 2.6 verification boundary
+
+- Source registry validation: tested
+- Active-source selection: tested
+- Duplicate lifecycle identifiers/URLs: guarded
+- URL canonicalization: tested
+- Scheduled monitor uses active lifecycle entries: implemented
+- Real runtime source management persistence: not verified
+- Production deployment: remains blocked by the current Vercel build-rate limit
+
+## Next build
+
+1. Exercise a real durable history + alert outbox provider
+2. Exercise a real authenticated identity provider
+3. Exercise a real notification provider
+4. Add durable source management mutations
+5. Add user-configurable schedules
