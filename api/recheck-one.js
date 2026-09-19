@@ -3,7 +3,6 @@ const { getHistoryStorageStatus } = require('../lib/history-store');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-
   const url = typeof req.query?.url === 'string' ? req.query.url : '';
   if (!url) return res.status(400).json({ ok: false, error: 'Missing url' });
 
@@ -12,19 +11,16 @@ module.exports = async (req, res) => {
     const storage = getHistoryStorageStatus();
     return res.status(200).json({
       ok: true,
-      version: '1.6',
+      version: '1.7',
       ...result,
       storage: storage.storage,
       durable: storage.durable,
-      note: 'The canonical pipeline applies source policy, captures bounded source content, derives explicit availability evidence, records history/change detection, and derives opportunity status. Availability evidence is not a guarantee of hiring, eligibility, compensation, or continued availability.'
+      note: 'The canonical pipeline derives explicit availability and Philippines eligibility evidence from bounded source text. These evidence states do not guarantee hiring, eligibility, compensation, or continued availability.'
     });
   } catch (error) {
     const status = error && error.code === 'SOURCE_POLICY_REJECTED'
       ? (error.statusCode || 400)
       : 500;
-    return res.status(status).json({
-      ok: false,
-      error: error instanceof Error ? error.message : 'Recheck failed'
-    });
+    return res.status(status).json({ ok: false, error: error instanceof Error ? error.message : 'Recheck failed' });
   }
 };

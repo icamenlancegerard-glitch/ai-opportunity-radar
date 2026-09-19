@@ -22,11 +22,8 @@ module.exports = async (req, res) => {
           reachable: false,
           status: null,
           checkedAt: new Date().toISOString(),
-          availabilityEvidence: {
-            status: 'NOT_VERIFIED',
-            source: 'recheck_failed',
-            matchedSignals: []
-          }
+          availabilityEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] },
+          eligibilityEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] }
         },
         error: error instanceof Error ? error.message : 'recheck failed'
       };
@@ -36,24 +33,28 @@ module.exports = async (req, res) => {
   const storage = getHistoryStorageStatus();
   const reachable = results.filter(x => x.snapshot?.reachable === true).length;
   const changed = results.filter(x => x.history?.changed === true).length;
-  const openEvidence = results.filter(x => x.opportunityStatus?.availability === 'OPEN_EVIDENCE').length;
-  const closedEvidence = results.filter(x => x.opportunityStatus?.availability === 'CLOSED_EVIDENCE').length;
-  const conflictingEvidence = results.filter(x => x.opportunityStatus?.availability === 'CONFLICTING_EVIDENCE').length;
+  const availability = {
+    open: results.filter(x => x.opportunityStatus?.availability === 'OPEN_EVIDENCE').length,
+    closed: results.filter(x => x.opportunityStatus?.availability === 'CLOSED_EVIDENCE').length,
+    conflicting: results.filter(x => x.opportunityStatus?.availability === 'CONFLICTING_EVIDENCE').length
+  };
+  const phEligibility = {
+    eligible: results.filter(x => x.opportunityStatus?.eligibility === 'PH_ELIGIBLE_EVIDENCE').length,
+    excluded: results.filter(x => x.opportunityStatus?.eligibility === 'PH_EXCLUDED_EVIDENCE').length,
+    conflicting: results.filter(x => x.opportunityStatus?.eligibility === 'CONFLICTING_EVIDENCE').length
+  };
 
   return res.status(200).json({
     ok: true,
-    version: '1.6',
+    version: '1.7',
     storage: storage.storage,
     durable: storage.durable,
     count: results.length,
     reachable,
     changed,
-    availabilityEvidence: {
-      open: openEvidence,
-      closed: closedEvidence,
-      conflicting: conflictingEvidence
-    },
+    availabilityEvidence: availability,
+    phEligibilityEvidence: phEligibility,
     results,
-    note: 'Scheduled source checks use the same canonical pipeline as manual rechecks. Availability states are evidence labels from bounded source text, not guarantees of hiring, eligibility, compensation, or continued availability.'
+    note: 'Scheduled checks use the same canonical pipeline. Evidence states come from bounded source text and do not guarantee hiring, eligibility, compensation, or continued availability.'
   });
 };
