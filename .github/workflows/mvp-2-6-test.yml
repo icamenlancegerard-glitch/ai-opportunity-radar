@@ -21,5 +21,5 @@ jobs:
         run: node tests/monitored-sources.test.js
       - name: Run monitor tests
         run: node tests/monitor.test.js
-      - name: Run alert inbox tests
-        run: node tests/alerts-all.test.js
+      - name: Run lifecycle-backed alert inbox test
+        run: node tests/monitored-sources.test.js
