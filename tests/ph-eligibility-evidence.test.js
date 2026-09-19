@@ -6,7 +6,10 @@ assert.deepEqual(
   {
     status: 'PH_ELIGIBLE_EVIDENCE',
     source: 'explicit_applicant_location_text',
-    matchedSignals: ['PH_ELIGIBLE:must be based in the philippines']
+    matchedSignals: [
+      'PH_ELIGIBLE:based in the philippines',
+      'PH_ELIGIBLE:must be based in the philippines'
+    ]
   }
 );
 

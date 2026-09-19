@@ -1,0 +1,21 @@
+name: MVP 2.1 Persistence Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test-persistence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run saved-search store tests
+        run: node tests/saved-search-store.test.js
+      - name: Run saved-search API tests
+        run: node tests/saved-searches-api.test.js

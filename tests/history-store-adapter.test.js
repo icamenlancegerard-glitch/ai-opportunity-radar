@@ -29,7 +29,9 @@ const {
 
   assert.deepStrictEqual(getHistoryStorageStatus(), {
     storage: 'memory-only',
-    durable: false
+    durable: false,
+    configured: false,
+    providerBoundary: 'HTTP'
   });
 
   console.log('history-store-adapter.test.js: PASS');

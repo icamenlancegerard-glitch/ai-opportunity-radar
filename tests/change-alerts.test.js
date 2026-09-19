@@ -57,7 +57,8 @@ const closed = makeChangeAlerts({
 assert.deepEqual(closed.map(x => x.code), [
   'SOURCE_DOWN',
   'AVAILABILITY_CLOSED',
-  'PH_EXCLUDED'
+  'PH_EXCLUDED',
+  'COMPENSATION_CHANGED'
 ]);
 
 const samePayChanged = makeChangeAlerts({
