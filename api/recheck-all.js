@@ -44,16 +44,16 @@ module.exports = async (req, res) => {
     conflicting: results.filter(x => x.opportunityStatus?.eligibility === 'CONFLICTING_EVIDENCE').length
   };
 
-  return res.status(200).json({
+  const compensationEvidence = { stated: results.filter(x => x.opportunityStatus?.pay === 'COMPENSATION_EVIDENCE').length };\n\n  return res.status(200).json({
     ok: true,
-    version: '1.7',
+    version: '1.8',
     storage: storage.storage,
     durable: storage.durable,
     count: results.length,
     reachable,
     changed,
     availabilityEvidence: availability,
-    phEligibilityEvidence: phEligibility,
+    phEligibilityEvidence: phEligibility,\n    compensationEvidence,
     results,
     note: 'Scheduled checks use the same canonical pipeline. Evidence states come from bounded source text and do not guarantee hiring, eligibility, compensation, or continued availability.'
   });
