@@ -8,9 +8,12 @@ const { classifyCompensation } = require('../lib/compensation-evidence');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { validateSavedSearch, matchesSavedSearch } = require('../lib/saved-searches');
 const { getSavedSearchStorageStatus } = require('../lib/saved-search-store');
+const { getIdentityStatus } = require('../lib/request-identity');
+const { getAlertOutboxStatus } = require('../lib/alert-outbox');
+const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.2 — public read-only runtime status.
+// MVP 2.3 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -27,7 +30,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.2',
+    version: '2.3',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -35,6 +38,9 @@ module.exports = async (req, res) => {
       compensationEvidence: typeof classifyCompensation === 'function',
       changeAlerts: typeof makeChangeAlerts === 'function',
       alertInbox: true,
+      identity: getIdentityStatus(),
+      alertOutbox: getAlertOutboxStatus(),
+      alertDelivery: getAlertDeliveryStatus(),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
@@ -46,11 +52,14 @@ module.exports = async (req, res) => {
     verification: {
       systemHealth: ok,
       durableHistory: storage.durable ? 'configured' : 'not_verified',
+      authenticatedIdentity: getIdentityStatus().configured ? 'provider-backed' : 'not_verified',
+      durableAlertOutbox: getAlertOutboxStatus().durable ? 'configured' : 'not_verified',
+      externalAlertDelivery: getAlertDeliveryStatus().configured ? 'provider-backed' : 'not_verified',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.2 provides deterministic change-alert events, a read-only monitored alert inbox, and server-side saved-search sync; external notifications are not sent.'
+    note: 'MVP 2.3 adds provider-backed identity, alert-outbox, and notification-delivery boundaries. None are claimed configured unless their HTTPS providers are actually present.'
   });
 };

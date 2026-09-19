@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.2 — evidence-first opportunity monitoring**
+**MVP 2.3 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -78,3 +78,39 @@ Server-side saved-search storage remains honest:
 ## Verification boundary
 
 A green code/test result does not prove production durability or deployment availability. Those remain `not verified` until the configured provider and deployment can be exercised successfully.
+
+
+## MVP 2.3 — identity + alert delivery boundaries
+
+MVP 2.3 removes client-supplied owner IDs from the authenticated saved-search path. The server now resolves the owner subject through an HTTPS identity provider:
+
+- `RADAR_IDENTITY_PROVIDER_URL` — HTTPS identity provider exposing `GET /me`
+- request authentication uses an HTTP Bearer token
+- provider response must include a validated `subject`
+- missing identity provider configuration is reported instead of silently falling back to an owner ID
+
+Session introspection is available at `/api/session`. It verifies an existing identity; it does not create an identity or provide a login UI.
+
+### Alert outbox
+
+Deterministic change alerts now have an optional outbox boundary:
+
+- `RADAR_ALERT_OUTBOX_URL`
+- `RADAR_ALERT_OUTBOX_TOKEN`
+- provider contract: `POST /events`, `GET /events`, `POST /events/{eventKey}/delivered`
+
+The outbox deduplicates events by `code + url + checkedAt`.
+
+### External delivery
+
+Notification delivery has a separate HTTPS provider boundary:
+
+- `RADAR_ALERT_DELIVERY_URL`
+- `RADAR_ALERT_DELIVERY_TOKEN`
+- provider contract: `POST /deliver`
+
+No email, push, SMS, or other external delivery is claimed unless that provider is actually configured and exercised.
+
+### Current verification boundary
+
+The repository can test all three provider boundaries with mocked HTTPS calls, but provider configuration is still a deployment concern. Without configured providers, runtime status remains explicit about `not_verified` / `not-configured` states.
