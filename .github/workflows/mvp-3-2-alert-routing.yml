@@ -1,0 +1,53 @@
+name: MVP 3.2 Subscription-Aware Alert Routing
+
+on:
+  push:
+    paths:
+      - 'api/user-monitor-scheduler.js'
+      - 'api/alert-worker.js'
+      - 'lib/alert-routing.js'
+      - 'lib/alert-subscriptions.js'
+      - 'lib/alert-subscription-store.js'
+      - 'lib/monitor-schedule-store.js'
+      - 'lib/alert-outbox.js'
+      - 'tests/alert-routing.test.js'
+      - 'tests/alert-worker.test.js'
+      - 'tests/alert-subscriptions.test.js'
+      - 'tests/user-monitor-scheduler.test.js'
+      - 'supabase/mvp-3-2.sql'
+  pull_request:
+    paths:
+      - 'api/user-monitor-scheduler.js'
+      - 'api/alert-worker.js'
+      - 'lib/alert-routing.js'
+      - 'lib/alert-subscriptions.js'
+      - 'lib/alert-subscription-store.js'
+      - 'lib/monitor-schedule-store.js'
+      - 'lib/alert-outbox.js'
+      - 'tests/alert-routing.test.js'
+      - 'tests/alert-worker.test.js'
+      - 'tests/alert-subscriptions.test.js'
+      - 'tests/user-monitor-scheduler.test.js'
+      - 'supabase/mvp-3-2.sql'
+
+jobs:
+  alert-routing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run MVP 3.2 contract tests
+        run: |
+          set -euo pipefail
+          node tests/alert-preferences.test.js
+          node tests/alert-routing.test.js
+          node tests/alert-subscriptions.test.js
+          node tests/alert-subscription-api.test.js
+          node tests/user-alerts-filter.test.js
+          node tests/monitor-schedules.test.js
+          node tests/monitor-schedule-store.test.js
+          node tests/monitor-schedule-api.test.js
+          node tests/user-monitor-scheduler.test.js
+          node tests/alert-worker.test.js
