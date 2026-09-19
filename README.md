@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.8 — evidence-first opportunity monitoring**
+**MVP 2.9 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -236,6 +236,27 @@ Tracking parameters are not silently stripped because their meaning is source-sp
 - Scheduled monitor uses active lifecycle entries: implemented
 - Real runtime source management persistence: not verified
 - Production deployment: remains blocked by the current Vercel build-rate limit
+
+## MVP 2.9 — alert preferences
+
+The Alert Center now supports browser-local user preferences for four evidence-change groups:
+
+- **Source health** — source down/recovered.
+- **Availability** — opened/closed/conflicting evidence.
+- **Philippines eligibility** — eligible/excluded/conflicting evidence.
+- **Compensation** — stated/removed/changed evidence.
+
+Unknown future event codes are retained rather than silently discarded. Preferences only filter what the Alert Center shows; they do not change the recorded evidence or alert generation rules.
+
+Preferences are browser-local for this MVP. Authenticated per-user subscriptions and durable notification routing remain provider-backed work.
+
+## Next build
+
+1. Exercise the real Supabase + Resend provider path
+2. Add authenticated per-user alert subscriptions
+3. Add user-configurable monitoring schedules
+4. Add durable source-management mutations
+5. Improve opportunity ingestion/refresh beyond the current static seed
 
 ## MVP 2.8 — real provider pack
 
