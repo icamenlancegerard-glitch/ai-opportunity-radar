@@ -52,8 +52,8 @@ const {
   assert.equal(calls[2].url, 'https://history.example.test/records');
   assert.equal(calls[2].options.method, 'POST');
 
-  await assert.rejects(
-    () => Promise.resolve(createHttpHistoryStore({ baseUrl: 'http://history.example.test' })),
+  assert.throws(
+    () => createHttpHistoryStore({ baseUrl: 'http://history.example.test' }),
     /HISTORY_STORE_URL must be an HTTPS URL/
   );
 
