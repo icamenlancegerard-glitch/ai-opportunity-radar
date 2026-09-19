@@ -6,50 +6,36 @@ const SOURCES = [
   'https://jobs.telusdigital.com/search/cfm5/customer-experience-cx/jobs/in/country/philippines?ns_category=artificial-intelligence'
 ];
 
-const { makeHistoryRecord } = require('../lib/history-engine');
-const { getHistoryStore } = require('../lib/history-store');
-
-const store = getHistoryStore();
+const { recheckAndRecord } = require('../lib/recheck-pipeline');
+const { getHistoryStorageStatus } = require('../lib/history-store');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const results = await Promise.all(SOURCES.map(async url => {
-    const started = Date.now();
+  const results = await Promise.all(SOURCES.map(async (url) => {
     try {
-      const r = await fetch(url, {
-        method: 'GET',
-        redirect: 'manual',
-        headers: { 'User-Agent': 'AI-Opportunity-Radar-Recheck/1.0c', 'Range': 'bytes=0-2048' }
-      });
-      return { url, reachable: r.status >= 200 && r.status < 400, status: r.status, latencyMs: Date.now() - started };
+      return await recheckAndRecord(url);
     } catch (error) {
-      return { url, reachable: false, status: null, latencyMs: Date.now() - started, error: error instanceof Error ? error.message : 'request failed' };
+      return {
+        snapshot: { url, reachable: false, status: null, checkedAt: new Date().toISOString() },
+        error: error instanceof Error ? error.message : 'recheck failed'
+      };
     }
   }));
 
-  const checkedAt = new Date().toISOString();
-  const history = [];
-
-  for (const result of results) {
-    const snapshot = { ...result, checkedAt };
-    const previousRecord = await store.getLatest(result.url);
-    const previousSnapshot = previousRecord ? previousRecord.snapshot : null;
-    const record = makeHistoryRecord(snapshot, previousSnapshot);
-    await store.append(record);
-    history.push(record);
-  }
+  const storage = getHistoryStorageStatus();
+  const reachable = results.filter(x => x.snapshot?.reachable === true).length;
+  const changed = results.filter(x => x.history?.changed === true).length;
 
   return res.status(200).json({
     ok: true,
-    version: '1.0c',
-    storage: 'memory-only',
-    durable: false,
-    checkedAt,
+    version: '1.5',
+    storage: storage.storage,
+    durable: storage.durable,
     count: results.length,
-    reachable: results.filter(x => x.reachable).length,
+    reachable,
+    changed,
     results,
-    history,
-    note: 'History is shared within the current process only. Persistent storage is not configured. Reachability does not confirm job availability, eligibility, compensation, or hiring status.'
+    note: 'Scheduled source checks use the same canonical pipeline as manual rechecks. Reachability and change detection do not confirm job availability, eligibility, compensation, or hiring status.'
   });
 };
