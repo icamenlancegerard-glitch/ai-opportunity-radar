@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.6 — evidence-first opportunity monitoring**
+**MVP 2.7 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -197,6 +197,25 @@ MVP 2.5 is **at-least-once** rather than exactly-once. A delivery provider shoul
 4. Monitored-source lifecycle management and URL canonicalization
 5. User-configurable schedules
 
+
+## MVP 2.7 — user evidence loop
+
+The browser UI now lets a user follow individual opportunities and inspect their recorded evidence history.
+
+- **Watch evidence** — keep a lightweight browser-local watchlist for opportunities worth monitoring.
+- **Watched only** — filter the opportunity view to the user's watched sources.
+- **Evidence history** — inspect recorded checks for a source, including reachability, HTTP status, availability evidence, Philippines eligibility evidence, compensation evidence, and detected changes.
+- **Lifecycle-aligned alert inbox** — the alert center reads the same active monitored-source registry used by scheduled monitoring instead of maintaining a second hardcoded source list.
+
+The watchlist is intentionally browser-local. Account sync, durable per-user subscriptions, and external notification delivery remain separate provider-backed concerns.
+
+## Next build
+
+1. Exercise a real durable history + alert outbox provider
+2. Exercise a real authenticated identity provider
+3. Exercise a real notification provider
+4. Add durable source-management mutations
+5. Add user-configurable schedules
 
 ## MVP 2.6 — monitored-source lifecycle
 
