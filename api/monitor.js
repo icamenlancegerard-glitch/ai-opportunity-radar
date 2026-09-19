@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
   if (!isAuthorizedCron(req)) {
     return res.status(401).json({
       ok: false,
-      version: '2.5',
+      version: '2.6',
       error: 'Unauthorized cron request',
       code: 'CRON_UNAUTHORIZED'
     });
