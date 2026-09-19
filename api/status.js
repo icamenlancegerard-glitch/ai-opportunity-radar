@@ -11,10 +11,11 @@ const { getSavedSearchStorageStatus } = require('../lib/saved-search-store');
 const { getIdentityStatus } = require('../lib/request-identity');
 const { getAlertOutboxStatus } = require('../lib/alert-outbox');
 const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
+const { getAlertSubscriptionStorageStatus } = require('../lib/alert-subscription-store');
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.9 — public read-only runtime status.
+// MVP 3.0 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -31,7 +32,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.9',
+    version: '3.0',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -51,7 +52,8 @@ module.exports = async (req, res) => {
       storage: storage.storage,
       durable: storage.durable,
       storageConfigured: storage.configured,
-      savedSearchStorage: getSavedSearchStorageStatus()
+      savedSearchStorage: getSavedSearchStorageStatus(),
+      alertSubscriptionStorage: getAlertSubscriptionStorageStatus()
     },
     verification: {
       systemHealth: ok,
@@ -64,7 +66,8 @@ module.exports = async (req, res) => {
       monitoredSourceLifecycle: 'configured',
       evidenceWatchlist: 'browser-local',
       providerExercise: { script: 'scripts/provider-exercise.js', requiresExplicitConfirmation: true },
-      alertPreferences: 'browser-local',
+      alertPreferences: 'browser-local-fallback',
+      authenticatedAlertSubscriptions: getAlertSubscriptionStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
       evidenceTimeline: 'configured',
       providerPack: { history: getHistoryStorageStatus(), alertOutbox: getAlertOutboxStatus(), alertDelivery: getAlertDeliveryStatus() },
       jobAvailability: 'not_verified',
@@ -72,6 +75,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.9 adds browser-local alert preferences that filter the Alert Center by source health, availability, Philippines eligibility, and compensation event groups. Durable subscriptions remain a separate authenticated provider concern.'
+    note: 'MVP 3.0 adds authenticated per-user alert subscriptions. The public browser-local preferences remain a fallback; authenticated users can persist alert categories through the identity and durable subscription provider boundary.'
   });
 };
