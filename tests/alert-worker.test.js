@@ -72,12 +72,20 @@ const now = new Date('2026-09-19T01:00:00.000Z');
   assert.equal((await retryOutbox.list())[0].nextAttemptAt, null);
 
   const routedOutbox = createMemoryAlertOutbox();
-  await routedOutbox.enqueue({
+  const routedAlice = await routedOutbox.enqueue({
     ...alert,
     ownerId: 'alice',
     subscriptionIds: ['sub-availability'],
     code: 'AVAILABILITY_OPENED'
   });
+  const routedBob = await routedOutbox.enqueue({
+    ...alert,
+    ownerId: 'bob',
+    subscriptionIds: ['sub-availability'],
+    code: 'AVAILABILITY_OPENED'
+  });
+  assert.notEqual(routedAlice.eventKey, routedBob.eventKey);
+  assert.equal((await routedOutbox.list()).length, 2);
   const routedSend = [];
   const routed = await runAlertDeliveryCycle({
     outbox: routedOutbox,
