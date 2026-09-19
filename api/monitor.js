@@ -3,17 +3,12 @@ const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { getHistoryStorageStatus } = require('../lib/history-store');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { getAlertOutbox, getAlertOutboxStatus } = require('../lib/alert-outbox');
+const { isAuthorizedCron } = require('../lib/cron-auth');
 
-// MVP 2.4 — scheduled monitoring loop.
+// MVP 2.5 — scheduled monitoring loop with durable alert lifecycle.
 // Vercel Cron requests are authenticated with CRON_SECRET.
 // The loop rechecks sources, records history, and queues deterministic alerts.
 // It does not claim external delivery unless a separate delivery system is configured.
-
-function isAuthorizedCron(req) {
-  const configured = typeof process.env.CRON_SECRET === 'string' && process.env.CRON_SECRET.length > 0;
-  const presented = req.headers?.authorization || req.headers?.Authorization || '';
-  return configured && presented === `Bearer ${process.env.CRON_SECRET}`;
-}
 
 async function runMonitor({
   sources = MONITORED_SOURCES,
@@ -73,12 +68,29 @@ function failureSnapshot(url) {
   };
 }
 
+function buildMonitorResponse({ report, history, alertStore }) {
+  return {
+    ok: report.ok,
+    version: '2.5',
+    monitoredSources: report.monitoredSources,
+    processedSources: report.processedSources,
+    recheckFailures: report.recheckFailures,
+    queuedAlerts: report.queuedAlerts,
+    historyStorage: history.storage,
+    historyDurable: history.durable,
+    alertOutboxStorage: alertStore.storage,
+    alertOutboxDurable: alertStore.durable,
+    results: report.results,
+    note: 'Scheduled monitoring records bounded evidence changes and queues deterministic alerts. External notification delivery is not performed by this monitor.'
+  };
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'GET only' });
   if (!isAuthorizedCron(req)) {
     return res.status(401).json({
       ok: false,
-      version: '2.4',
+      version: '2.5',
       error: 'Unauthorized cron request',
       code: 'CRON_UNAUTHORIZED'
     });
@@ -88,21 +100,9 @@ module.exports = async (req, res) => {
   const history = getHistoryStorageStatus();
   const alertStore = getAlertOutboxStatus();
 
-  return res.status(200).json({
-    ok: report.ok,
-    version: '2.4',
-    monitoredSources: report.monitoredSources,
-    processedSources: report.processedSources,
-    recheckFailures: report.recheckFailures,
-    queuedAlerts: report.queuedAlerts,
-    historyStorage: history.storage,
-    historyDurable: history.durable,
-    alertOutboxStorage: alertStore.storage,
-    alertOutboxDurable: alertStore.durable,
-    results,
-    note: 'Scheduled monitoring records bounded evidence changes and queues deterministic alerts. External notification delivery is not performed by this monitor.'
-  });
+  return res.status(200).json(buildMonitorResponse({ report, history, alertStore }));
 };
 
 module.exports.isAuthorizedCron = isAuthorizedCron;
 module.exports.runMonitor = runMonitor;
+module.exports.buildMonitorResponse = buildMonitorResponse;

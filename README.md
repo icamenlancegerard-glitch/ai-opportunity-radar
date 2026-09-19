@@ -144,3 +144,55 @@ The monitor does not automatically claim external notification delivery. With no
 3. Production email/push delivery
 4. URL canonicalization and monitored-source lifecycle management
 5. User-configurable schedules
+
+
+## MVP 2.5 — alert lifecycle
+
+The Radar now separates **alert generation** from **alert delivery** with an explicit event lifecycle:
+
+`queued → delivering → delivered`
+`delivering → retry → delivering → ... → failed`
+
+The outbox event remains deterministic by `code + url + checkedAt`. Delivery attempts are bounded and use a lease so an abandoned `delivering` event can be reclaimed. Retries use bounded exponential backoff. A terminal `failed` state records the last error without silently turning the event into a success.
+
+### Alert delivery worker
+
+A protected worker endpoint is available at `/api/alert-worker`.
+
+It:
+- requires `Authorization: Bearer <CRON_SECRET>`
+- reads eligible queued/retry events from the outbox
+- claims each event with a lease
+- calls the configured HTTPS delivery provider at `POST /deliver`
+- marks successful events `delivered`
+- schedules bounded retries after delivery errors
+- marks an event `failed` after the configured maximum attempts
+
+Optional environment controls:
+- `RADAR_ALERT_WORKER_MAX_EVENTS` (default 25, capped at 100)
+- `RADAR_ALERT_WORKER_MAX_ATTEMPTS` (default 3, capped at 10)
+
+The worker endpoint is implemented, but it is **not claimed as production-delivered** without a configured external delivery provider and durable outbox.
+
+### Delivery semantics
+
+MVP 2.5 is **at-least-once** rather than exactly-once. A delivery provider should treat `eventKey` as an idempotency/deduplication key. The system does not claim that a successful external send and a separate outbox acknowledgement are an atomic transaction.
+
+### MVP 2.5 verification boundary
+
+- Alert lifecycle state machine: tested with deterministic memory outbox
+- Lease/reclaim behavior: implemented and covered by outbox tests
+- Retry/backoff/terminal failure: tested with deterministic worker tests
+- Monitor response serialization: tested; prevents the prior undefined-`results` regression
+- Real durable outbox provider: not verified
+- Real external notification provider: not verified
+- Production worker execution: not verified while Vercel deployment remains blocked by the build-rate limit
+- Production cron schedule for the delivery worker: intentionally not added until a real delivery provider exists
+
+## Next build
+
+1. Real durable provider implementation/exercise for history + alert outbox lifecycle
+2. Authenticated identity provider exercise against a real account/session
+3. Production notification provider exercise
+4. Monitored-source lifecycle management and URL canonicalization
+5. User-configurable schedules

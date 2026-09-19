@@ -14,7 +14,7 @@ const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { MONITORED_SOURCES } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.4 — public read-only runtime status.
+// MVP 2.5 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.4',
+    version: '2.5',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -42,6 +42,7 @@ module.exports = async (req, res) => {
       identity: getIdentityStatus(),
       alertOutbox: getAlertOutboxStatus(),
       alertDelivery: getAlertDeliveryStatus(),
+      alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
       scheduledMonitor: { enabled: true, monitoredSources: MONITORED_SOURCES.length, cronPath: '/api/monitor' },
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
@@ -57,12 +58,13 @@ module.exports = async (req, res) => {
       authenticatedIdentity: getIdentityStatus().configured ? 'provider-backed' : 'not_verified',
       durableAlertOutbox: getAlertOutboxStatus().durable ? 'configured' : 'not_verified',
       externalAlertDelivery: getAlertDeliveryStatus().configured ? 'provider-backed' : 'not_verified',
+      alertDeliveryWorker: 'configured',
       scheduledMonitoring: 'configured',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.4 adds a CRON_SECRET-protected scheduled monitor. Durability and external notification remain not_verified unless their providers are configured.'
+    note: 'MVP 2.5 adds a CRON_SECRET-protected alert delivery worker with explicit retry/lease lifecycle. Durable storage and external notification remain not_verified unless their providers are configured and exercised.'
   });
 };
