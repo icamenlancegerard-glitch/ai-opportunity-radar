@@ -23,7 +23,8 @@ module.exports = async (req, res) => {
           status: null,
           checkedAt: new Date().toISOString(),
           availabilityEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] },
-          eligibilityEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] }
+          eligibilityEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] },
+          compensationEvidence: { status: 'NOT_VERIFIED', source: 'recheck_failed', matchedSignals: [] }
         },
         error: error instanceof Error ? error.message : 'recheck failed'
       };
@@ -43,8 +44,11 @@ module.exports = async (req, res) => {
     excluded: results.filter(x => x.opportunityStatus?.eligibility === 'PH_EXCLUDED_EVIDENCE').length,
     conflicting: results.filter(x => x.opportunityStatus?.eligibility === 'CONFLICTING_EVIDENCE').length
   };
+  const compensationEvidence = {
+    stated: results.filter(x => x.opportunityStatus?.pay === 'COMPENSATION_EVIDENCE').length
+  };
 
-  const compensationEvidence = { stated: results.filter(x => x.opportunityStatus?.pay === 'COMPENSATION_EVIDENCE').length };\n\n  return res.status(200).json({
+  return res.status(200).json({
     ok: true,
     version: '1.8',
     storage: storage.storage,
@@ -53,7 +57,8 @@ module.exports = async (req, res) => {
     reachable,
     changed,
     availabilityEvidence: availability,
-    phEligibilityEvidence: phEligibility,\n    compensationEvidence,
+    phEligibilityEvidence: phEligibility,
+    compensationEvidence,
     results,
     note: 'Scheduled checks use the same canonical pipeline. Evidence states come from bounded source text and do not guarantee hiring, eligibility, compensation, or continued availability.'
   });
