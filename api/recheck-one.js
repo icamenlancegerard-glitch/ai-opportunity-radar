@@ -12,11 +12,11 @@ module.exports = async (req, res) => {
     const storage = getHistoryStorageStatus();
     return res.status(200).json({
       ok: true,
-      version: '1.5',
+      version: '1.6',
       ...result,
       storage: storage.storage,
       durable: storage.durable,
-      note: 'The canonical pipeline applies source policy, records a snapshot, computes history/change detection, and derives opportunity status. It does not confirm job availability, eligibility, compensation, or hiring status.'
+      note: 'The canonical pipeline applies source policy, captures bounded source content, derives explicit availability evidence, records history/change detection, and derives opportunity status. Availability evidence is not a guarantee of hiring, eligibility, compensation, or continued availability.'
     });
   } catch (error) {
     const status = error && error.code === 'SOURCE_POLICY_REJECTED'
