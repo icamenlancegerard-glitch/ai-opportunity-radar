@@ -1,4 +1,4 @@
-name: MVP 1.6 Availability Evidence Test
+name: MVP 1.7 Evidence Tests
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  availability-evidence:
+  evidence:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,6 +17,8 @@ jobs:
           node-version: 20
       - name: Run availability evidence tests
         run: node tests/availability-evidence.test.js
+      - name: Run PH eligibility evidence tests
+        run: node tests/ph-eligibility-evidence.test.js
       - name: Run history engine tests
         run: node tests/history-engine.test.js
       - name: Run opportunity status tests
