@@ -11,7 +11,7 @@ const { getSavedSearchStorageStatus } = require('../lib/saved-search-store');
 const { getIdentityStatus } = require('../lib/request-identity');
 const { getAlertOutboxStatus } = require('../lib/alert-outbox');
 const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
-const { MONITORED_SOURCES } = require('../lib/monitored-sources');
+const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
 // MVP 2.5 — public read-only runtime status.
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.5',
+    version: '2.6',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -43,7 +43,8 @@ module.exports = async (req, res) => {
       alertOutbox: getAlertOutboxStatus(),
       alertDelivery: getAlertDeliveryStatus(),
       alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
-      scheduledMonitor: { enabled: true, monitoredSources: MONITORED_SOURCES.length, cronPath: '/api/monitor' },
+      scheduledMonitor: { enabled: true, monitoredSources: getMonitoredSources().length, cronPath: '/api/monitor' },
+      monitoredSourceLifecycle: getMonitoredSourceStatus(),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
@@ -60,11 +61,12 @@ module.exports = async (req, res) => {
       externalAlertDelivery: getAlertDeliveryStatus().configured ? 'provider-backed' : 'not_verified',
       alertDeliveryWorker: 'configured',
       scheduledMonitoring: 'configured',
+      monitoredSourceLifecycle: 'configured',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.5 adds a CRON_SECRET-protected alert delivery worker with explicit retry/lease lifecycle. Durable storage and external notification remain not_verified unless their providers are configured and exercised.'
+    note: 'MVP 2.6 adds deterministic monitored-source lifecycle metadata and stronger URL canonicalization. Durable storage and external notification remain not_verified unless their providers are configured and exercised.'
   });
 };
