@@ -1,0 +1,25 @@
+name: MVP 1.6 Availability Evidence Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  availability-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run availability evidence tests
+        run: node tests/availability-evidence.test.js
+      - name: Run history engine tests
+        run: node tests/history-engine.test.js
+      - name: Run opportunity status tests
+        run: node tests/opportunity-status.test.js
+      - name: Run canonical recheck pipeline tests
+        run: node tests/recheck-pipeline.test.js

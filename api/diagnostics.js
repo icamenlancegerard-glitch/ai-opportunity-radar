@@ -1,23 +1,11 @@
-const {
-  getHistoryStore,
-  getHistoryStorageStatus
-} = require('../lib/history-store');
-const {
-  normalizeSnapshot,
-  diffSnapshots,
-  makeHistoryRecord
-} = require('../lib/history-engine');
+const { getHistoryStore, getHistoryStorageStatus } = require('../lib/history-store');
+const { normalizeSnapshot, diffSnapshots, makeHistoryRecord } = require('../lib/history-engine');
 const { makeOpportunityStatus } = require('../lib/opportunity-status');
-const {
-  canonicalizeSourceUrl,
-  getSourcePolicyStatus
-} = require('../lib/source-policy');
-const {
-  checkSource,
-  recheckAndRecord
-} = require('../lib/recheck-pipeline');
+const { canonicalizeSourceUrl, getSourcePolicyStatus } = require('../lib/source-policy');
+const { classifyAvailability } = require('../lib/availability-evidence');
+const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 1.5 — read-only runtime diagnostics for the canonical recheck pipeline.
+// MVP 1.6 — read-only runtime diagnostics.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -25,26 +13,29 @@ module.exports = async (req, res) => {
 
   const storage = getHistoryStorageStatus();
   const store = getHistoryStore();
+  const sampleUrl = 'https://ph.indeed.com/viewjob?jk=diagnostic#fragment';
   const sample = normalizeSnapshot({
-    url: 'https://ph.indeed.com/viewjob?jk=diagnostic#fragment',
+    url: sampleUrl,
     reachable: true,
     status: 200,
-    checkedAt: new Date().toISOString()
+    checkedAt: new Date().toISOString(),
+    availabilityEvidence: classifyAvailability(sampleUrl, '<button>Apply now</button>', 200)
   });
   const diff = diffSnapshots(null, sample);
   const record = makeHistoryRecord(sample);
   const opportunityStatus = makeOpportunityStatus(sample, null, record);
   const policy = getSourcePolicyStatus();
-  const pipelineReady = [canonicalizeSourceUrl, checkSource, recheckAndRecord]
+  const pipelineReady = [canonicalizeSourceUrl, classifyAvailability, checkSource, recheckAndRecord]
     .every((fn) => typeof fn === 'function');
 
   return res.status(200).json({
     ok: true,
     service: 'ai-opportunity-radar',
-    version: '1.5',
+    version: '1.6',
     checkedAt: new Date().toISOString(),
     capabilities: {
       canonicalPipeline: pipelineReady,
+      availabilityEvidence: typeof classifyAvailability === 'function',
       sourcePolicy: policy,
       historyEngine: {
         normalizeSnapshot: typeof normalizeSnapshot === 'function',
@@ -62,12 +53,12 @@ module.exports = async (req, res) => {
       }
     },
     selfTest: {
-      canonicalUrl: canonicalizeSourceUrl(sample.url),
+      canonicalUrl: canonicalizeSourceUrl(sampleUrl),
       firstRecordChanged: record.changed,
       diffChanges: diff.changes,
       sourceStatus: opportunityStatus.sourceStatus,
       availability: opportunityStatus.availability
     },
-    note: 'Diagnostics prove module wiring and in-process capability only; they do not prove durable persistence or job availability.'
+    note: 'Diagnostics prove module wiring and bounded evidence classification only; they do not prove durable persistence or job availability.'
   });
 };
