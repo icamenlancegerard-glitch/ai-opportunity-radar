@@ -1,33 +1,40 @@
-// MVP 0.8 persistence-ready history adapter.
-// Vercel/serverless instances are ephemeral, so this endpoint deliberately
-// returns a normalized snapshot contract rather than pretending in-memory
-// state is durable. A database can implement this contract later.
+const { getHistoryStore, getHistoryStorageStatus } = require('../lib/history-store');
+const { validateSourceUrl } = require('../lib/source-policy');
 
-export default async function handler(req, res) {
-  if (req.method === 'GET') {
+module.exports = async (req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ ok: false, error: 'GET only' });
+  }
+
+  const storage = getHistoryStorageStatus();
+  const url = typeof req.query?.url === 'string' ? req.query.url : '';
+
+  try {
+    const store = getHistoryStore();
+    const records = url
+      ? await store.list(validateSourceUrl(url).toString())
+      : await store.list();
+
     return res.status(200).json({
       ok: true,
-      version: '0.8',
-      storage: 'not-configured',
-      records: [],
-      note: 'Persistent storage is not configured. No historical records are fabricated.'
+      version: '1.9',
+      storage: storage.storage,
+      durable: storage.durable,
+      configured: storage.configured,
+      count: records.length,
+      records,
+      note: storage.durable
+        ? 'History is read from the configured durable provider adapter.'
+        : 'Persistent storage is not configured; history is process-local and may disappear between serverless invocations.'
     });
-  }
-
-  if (req.method === 'POST') {
-    const body = typeof req.body === 'object' && req.body ? req.body : {};
-    const { url, reachable, status, checkedAt } = body;
-    if (typeof url !== 'string' || typeof reachable !== 'boolean') {
-      return res.status(400).json({ error: 'url and reachable are required' });
-    }
-    return res.status(501).json({
+  } catch (error) {
+    const status = error && error.code === 'SOURCE_POLICY_REJECTED'
+      ? (error.statusCode || 400)
+      : 500;
+    return res.status(status).json({
       ok: false,
-      version: '0.8',
-      storage: 'not-configured',
-      error: 'Persistent storage is not configured; snapshot was not saved.',
-      candidate: { url, reachable, status: status ?? null, checkedAt: checkedAt ?? new Date().toISOString() }
+      version: '1.9',
+      error: error instanceof Error ? error.message : 'History read failed'
     });
   }
-
-  return res.status(405).json({ error: 'GET or POST only' });
-}
+};
