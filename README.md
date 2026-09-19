@@ -8,7 +8,7 @@ AI Opportunity Radar is a lightweight web prototype for finding AI-related work 
 - Search by title, company, skill, or location
 - Filter by opportunity type and work mode
 - Evidence-status badges
-- Freshness status based on recorded \`lastChecked\`
+- Freshness status based on recorded `lastChecked`
 - Direct source links
 - Shared, allowlisted server-side source policy
 - Canonical recheck pipeline: source policy → bounded content → availability evidence → PH eligibility evidence → compensation evidence → snapshot → history → change detection → opportunity status
@@ -24,7 +24,9 @@ PH eligibility is represented as evidence:
 
 A generic mention of "Philippines", a Philippine office, a job's physical location, or an employer's market does **not** establish applicant eligibility.
 
-An HTTP 200 response by itself never becomes an availability or eligibility claim. Error/5xx pages are not parsed as job evidence.
+Compensation is represented as evidence only when bounded source text contains an explicit currency + amount/range + payment unit such as per hour or per month. Vague language such as "competitive salary", a bare currency symbol, or an unrelated monetary amount remains **NOT_VERIFIED**. Multiple stated compensation entries are recorded as evidence; they are not automatically treated as contradictory without semantic grounds.
+
+An HTTP 200 response by itself never becomes an availability, eligibility, or compensation claim. Error/5xx pages are not parsed as job evidence.
 
 The pipeline captures at most 32 KiB of response text. Raw page content is not persisted by the evidence modules; only normalized evidence states and matched signal labels enter history.
 
@@ -38,9 +40,10 @@ Persistent storage is still **not configured**; current history remains process-
 
 Freshness is a prioritization signal, not a truth claim.
 
-## Compensation evidence boundary\nCompensation is represented as evidence only when the bounded source text contains an explicit currency + amount/range + payment unit such as per hour or per month. Vague language such as “competitive salary,” a bare currency symbol, or an unrelated monetary amount remains **NOT_VERIFIED**. Multiple stated compensation entries are recorded as evidence; they are not automatically treated as contradictory without semantic grounds.\n\n## Next build
+## Next build
 1. Durable history persistence
 2. URL canonicalization beyond fragment normalization and deduplication
+3. Saved searches and alerts
 4. Optional paid tier
 
 ## Separation
