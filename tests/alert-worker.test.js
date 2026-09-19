@@ -95,9 +95,9 @@ const now = new Date('2026-09-19T01:00:00.000Z');
     },
     now
   });
-  assert.equal(routed.failed, 1);
+  assert.equal(routed.failed, 2);
   assert.equal(routedSend.length, 0);
-  assert.equal(routed.results[0].code, 'USER_ROUTING_UNSUPPORTED');
+  assert.equal(routed.results.every(result => result.code === 'USER_ROUTING_UNSUPPORTED'), true);
   assert.equal((await routedOutbox.list())[0].status, 'failed');
 
   const unconfigured = await runAlertDeliveryCycle({
