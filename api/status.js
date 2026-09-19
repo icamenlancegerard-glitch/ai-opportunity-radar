@@ -7,7 +7,7 @@ const { classifyPhEligibility } = require('../lib/ph-eligibility-evidence');
 const { classifyCompensation } = require('../lib/compensation-evidence');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 1.8 — public read-only runtime status.
+// MVP 1.9 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '1.8',
+    version: '1.9',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -33,15 +33,17 @@ module.exports = async (req, res) => {
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
       storage: storage.storage,
-      durable: storage.durable
+      durable: storage.durable,
+      storageConfigured: storage.configured
     },
     verification: {
       systemHealth: ok,
+      durableHistory: storage.durable ? 'configured' : 'not_verified',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'Evidence labels are separate from final job availability, eligibility, compensation, and hiring status.'
+    note: 'Durable history is reported only when an HTTPS persistence provider is actually configured.'
   });
 };
