@@ -24,7 +24,7 @@ const response = buildMonitorResponse({
 });
 assert.equal(response.results.length, 1);
 assert.equal(response.results[0].url, 'https://example.test/a');
-assert.equal(response.version, '2.5');
+assert.equal(response.version, '2.6');
 (async () => {
   const events = [];
   const outbox = {
