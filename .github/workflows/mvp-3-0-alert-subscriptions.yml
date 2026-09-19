@@ -1,0 +1,41 @@
+name: MVP 3.0 Authenticated Alert Subscriptions
+
+on:
+  push:
+    paths:
+      - 'api/alert-subscriptions.js'
+      - 'api/user-alerts.js'
+      - 'lib/alert-subscriptions.js'
+      - 'lib/alert-subscription-store.js'
+      - 'tests/alert-subscriptions.test.js'
+      - 'tests/user-alerts-filter.test.js'
+      - 'supabase/mvp-3-0.sql'
+  pull_request:
+    paths:
+      - 'api/alert-subscriptions.js'
+      - 'api/user-alerts.js'
+      - 'lib/alert-subscriptions.js'
+      - 'lib/alert-subscription-store.js'
+      - 'tests/alert-subscriptions.test.js'
+      - 'tests/user-alerts-filter.test.js'
+      - 'supabase/mvp-3-0.sql'
+
+jobs:
+  alert-subscriptions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run MVP 3.0 contract tests
+        run: |
+          set -euo pipefail
+          node tests/alert-preferences.test.js
+          node tests/alert-subscriptions.test.js
+          node tests/alert-subscription-api.test.js
+          node tests/user-alerts-filter.test.js
