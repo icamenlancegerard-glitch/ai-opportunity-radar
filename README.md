@@ -16,6 +16,8 @@ AI Opportunity Radar is a lightweight web prototype for finding AI-related work 
 - Canonical recheck pipeline: source policy → bounded content → availability evidence → PH eligibility evidence → compensation evidence → snapshot → history → change detection → opportunity status → change alerts
 - Mobile-friendly UI
 - Explicit separation between source evidence, freshness, reachability, availability evidence, PH eligibility evidence, compensation evidence, and final claims
+- Browser-local evidence watchlist and watched-only filtering
+- Recorded evidence history timeline per source
 
 ## MVP 2.0 — change alerts
 A recheck can emit deterministic event labels when meaningful recorded evidence changes:
@@ -49,7 +51,7 @@ HTTP reachability, availability evidence, eligibility evidence, compensation evi
 
 Freshness is a prioritization signal, not a truth claim.
 
-## Next build
+## Historical early roadmap
 1. Connect a real durable history provider for production monitoring
 2. External alert delivery
 3. Server-side saved searches with user identity
@@ -137,7 +139,7 @@ The monitor does not automatically claim external notification delivery. With no
 - Durable history/outbox: not verified until providers are actually configured
 - External alert delivery: not verified until delivery provider is actually configured and exercised
 
-## Next build
+## Historical MVP 2.4 roadmap
 
 1. Real authenticated identity provider integration
 2. Real durable database/history + outbox provider
@@ -189,7 +191,7 @@ MVP 2.5 is **at-least-once** rather than exactly-once. A delivery provider shoul
 - Production worker execution: not verified while Vercel deployment remains blocked by the build-rate limit
 - Production cron schedule for the delivery worker: intentionally not added until a real delivery provider exists
 
-## Next build
+## Historical MVP 2.5 roadmap
 
 1. Real durable provider implementation/exercise for history + alert outbox lifecycle
 2. Authenticated identity provider exercise against a real account/session
@@ -197,25 +199,6 @@ MVP 2.5 is **at-least-once** rather than exactly-once. A delivery provider shoul
 4. Monitored-source lifecycle management and URL canonicalization
 5. User-configurable schedules
 
-
-## MVP 2.7 — user evidence loop
-
-The browser UI now lets a user follow individual opportunities and inspect their recorded evidence history.
-
-- **Watch evidence** — keep a lightweight browser-local watchlist for opportunities worth monitoring.
-- **Watched only** — filter the opportunity view to the user's watched sources.
-- **Evidence history** — inspect recorded checks for a source, including reachability, HTTP status, availability evidence, Philippines eligibility evidence, compensation evidence, and detected changes.
-- **Lifecycle-aligned alert inbox** — the alert center reads the same active monitored-source registry used by scheduled monitoring instead of maintaining a second hardcoded source list.
-
-The watchlist is intentionally browser-local. Account sync, durable per-user subscriptions, and external notification delivery remain separate provider-backed concerns.
-
-## Next build
-
-1. Exercise a real durable history + alert outbox provider
-2. Exercise a real authenticated identity provider
-3. Exercise a real notification provider
-4. Add durable source-management mutations
-5. Add user-configurable schedules
 
 ## MVP 2.6 — monitored-source lifecycle
 
@@ -253,6 +236,26 @@ Tracking parameters are not silently stripped because their meaning is source-sp
 - Scheduled monitor uses active lifecycle entries: implemented
 - Real runtime source management persistence: not verified
 - Production deployment: remains blocked by the current Vercel build-rate limit
+
+## MVP 2.7 — user evidence loop
+
+The browser UI now lets a user follow individual opportunities and inspect their recorded evidence history.
+
+- **Watch evidence** — keep a lightweight browser-local watchlist for opportunities worth monitoring.
+- **Watched only** — filter the opportunity view to the user's watched sources.
+- **Evidence history** — inspect recorded checks for a source, including reachability, HTTP status, availability evidence, Philippines eligibility evidence, compensation evidence, and detected changes.
+- **Lifecycle-aligned alert inbox** — the alert center reads the same active monitored-source registry used by scheduled monitoring instead of maintaining a second hardcoded source list.
+
+The watchlist is intentionally browser-local. Account sync, durable per-user subscriptions, and external notification delivery remain separate provider-backed concerns.
+
+## Next build
+
+1. Exercise a real durable history + alert outbox provider
+2. Exercise a real authenticated identity provider
+3. Exercise a real notification provider
+4. Add durable source-management mutations
+5. Add user-configurable schedules
+
 
 ## Next build
 
