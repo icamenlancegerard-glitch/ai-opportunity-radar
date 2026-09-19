@@ -4,6 +4,7 @@ const { makeOpportunityStatus } = require('../lib/opportunity-status');
 const { canonicalizeSourceUrl, getSourcePolicyStatus } = require('../lib/source-policy');
 const { classifyAvailability } = require('../lib/availability-evidence');
 const { classifyPhEligibility } = require('../lib/ph-eligibility-evidence');
+const { classifyCompensation } = require('../lib/compensation-evidence');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
 // MVP 1.8 — read-only runtime diagnostics.
@@ -20,14 +21,17 @@ module.exports = async (req, res) => {
     status: 200,
     checkedAt: new Date().toISOString(),
     availabilityEvidence: classifyAvailability(sampleUrl, sampleText, 200),
-    eligibilityEvidence: classifyPhEligibility(sampleUrl, sampleText, 200),\n    compensationEvidence: classifyCompensation(sampleUrl, sampleText, 200)
+    eligibilityEvidence: classifyPhEligibility(sampleUrl, sampleText, 200),
+    compensationEvidence: classifyCompensation(sampleUrl, sampleText, 200)
   });
   const diff = diffSnapshots(null, sample);
   const record = makeHistoryRecord(sample);
   const opportunityStatus = makeOpportunityStatus(sample, null, record);
   const policy = getSourcePolicyStatus();
-  const pipelineReady = [canonicalizeSourceUrl, classifyAvailability, classifyPhEligibility, classifyCompensation, checkSource, recheckAndRecord]
-    .every(fn => typeof fn === 'function');
+  const pipelineReady = [
+    canonicalizeSourceUrl, classifyAvailability, classifyPhEligibility,
+    classifyCompensation, checkSource, recheckAndRecord
+  ].every(fn => typeof fn === 'function');
 
   return res.status(200).json({
     ok: true,
@@ -37,7 +41,8 @@ module.exports = async (req, res) => {
     capabilities: {
       canonicalPipeline: pipelineReady,
       availabilityEvidence: typeof classifyAvailability === 'function',
-      phEligibilityEvidence: typeof classifyPhEligibility === 'function',\n      compensationEvidence: typeof classifyCompensation === 'function',
+      phEligibilityEvidence: typeof classifyPhEligibility === 'function',
+      compensationEvidence: typeof classifyCompensation === 'function',
       sourcePolicy: policy,
       historyEngine: {
         normalizeSnapshot: typeof normalizeSnapshot === 'function',
@@ -60,7 +65,8 @@ module.exports = async (req, res) => {
       diffChanges: diff.changes,
       sourceStatus: opportunityStatus.sourceStatus,
       availability: opportunityStatus.availability,
-      phEligibility: opportunityStatus.eligibility,\n      compensation: opportunityStatus.pay
+      phEligibility: opportunityStatus.eligibility,
+      compensation: opportunityStatus.pay
     },
     note: 'Diagnostics prove module wiring and deterministic evidence classification only; they do not prove durable persistence or final job availability.'
   });
