@@ -7,9 +7,10 @@ const { classifyPhEligibility } = require('../lib/ph-eligibility-evidence');
 const { classifyCompensation } = require('../lib/compensation-evidence');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { validateSavedSearch, matchesSavedSearch } = require('../lib/saved-searches');
+const { getSavedSearchStorageStatus } = require('../lib/saved-search-store');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.0 — public read-only runtime status.
+// MVP 2.2 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -26,19 +27,21 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.0',
+    version: '2.2',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
       phEligibilityEvidence: typeof classifyPhEligibility === 'function',
       compensationEvidence: typeof classifyCompensation === 'function',
       changeAlerts: typeof makeChangeAlerts === 'function',
+      alertInbox: true,
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
       storage: storage.storage,
       durable: storage.durable,
-      storageConfigured: storage.configured
+      storageConfigured: storage.configured,
+      savedSearchStorage: getSavedSearchStorageStatus()
     },
     verification: {
       systemHealth: ok,
@@ -48,6 +51,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.0 provides deterministic change-alert events and browser-side saved-search support; external notifications are not sent.'
+    note: 'MVP 2.2 provides deterministic change-alert events, a read-only monitored alert inbox, and server-side saved-search sync; external notifications are not sent.'
   });
 };
