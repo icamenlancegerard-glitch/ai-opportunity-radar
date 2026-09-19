@@ -15,6 +15,47 @@ function isAuthorizedCron(req) {
   return configured && presented === `Bearer ${process.env.CRON_SECRET}`;
 }
 
+async function runMonitor({
+  sources = MONITORED_SOURCES,
+  recheck = recheckAndRecord,
+  makeAlerts = makeChangeAlerts,
+  outbox = getAlertOutbox()
+} = {}) {
+  const results = [];
+  let recheckFailures = 0;
+  let queuedAlerts = 0;
+
+  for (const url of sources) {
+    try {
+      const result = await recheck(url);
+      const alerts = makeAlerts(result.history);
+      const queued = [];
+      for (const alert of alerts) {
+        queued.push(await outbox.enqueue({ ...alert, sourceUrl: url }));
+      }
+      queuedAlerts += queued.length;
+      results.push({ url, ok: true, alerts: queued });
+    } catch (error) {
+      recheckFailures += 1;
+      results.push({
+        url,
+        ok: false,
+        alerts: [],
+        error: error instanceof Error ? error.message : 'monitor recheck failed'
+      });
+    }
+  }
+
+  return {
+    ok: recheckFailures === 0,
+    monitoredSources: sources.length,
+    processedSources: results.length,
+    recheckFailures,
+    queuedAlerts,
+    results
+  };
+}
+
 function failureSnapshot(url) {
   return {
     snapshot: {
@@ -43,40 +84,17 @@ module.exports = async (req, res) => {
     });
   }
 
-  const outbox = getAlertOutbox();
-  const results = [];
-  let recheckFailures = 0;
-  let queuedAlerts = 0;
-
-  for (const url of MONITORED_SOURCES) {
-    try {
-      const result = await recheckAndRecord(url);
-      const alerts = makeChangeAlerts(result.history);
-      const queued = [];
-      for (const alert of alerts) {
-        queued.push(await outbox.enqueue({ ...alert, sourceUrl: url }));
-      }
-      queuedAlerts += queued.length;
-      results.push({ url, ok: true, alerts: queued });
-    } catch (error) {
-      recheckFailures += 1;
-      results.push({
-        ...failureSnapshot(url),
-        error: error instanceof Error ? error.message : 'monitor recheck failed'
-      });
-    }
-  }
-
+  const report = await runMonitor();
   const history = getHistoryStorageStatus();
   const alertStore = getAlertOutboxStatus();
 
   return res.status(200).json({
-    ok: recheckFailures === 0,
+    ok: report.ok,
     version: '2.4',
-    monitoredSources: MONITORED_SOURCES.length,
-    processedSources: results.length,
-    recheckFailures,
-    queuedAlerts,
+    monitoredSources: report.monitoredSources,
+    processedSources: report.processedSources,
+    recheckFailures: report.recheckFailures,
+    queuedAlerts: report.queuedAlerts,
     historyStorage: history.storage,
     historyDurable: history.durable,
     alertOutboxStorage: alertStore.storage,
@@ -87,3 +105,4 @@ module.exports = async (req, res) => {
 };
 
 module.exports.isAuthorizedCron = isAuthorizedCron;
+module.exports.runMonitor = runMonitor;
