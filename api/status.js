@@ -12,6 +12,7 @@ const { getIdentityStatus } = require('../lib/request-identity');
 const { getAlertOutboxStatus } = require('../lib/alert-outbox');
 const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { getAlertSubscriptionStorageStatus } = require('../lib/alert-subscription-store');
+const { getMonitorScheduleStorageStatus } = require('../lib/monitor-schedule-store');
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
@@ -32,7 +33,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '3.0',
+    version: '3.1',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -53,7 +54,8 @@ module.exports = async (req, res) => {
       durable: storage.durable,
       storageConfigured: storage.configured,
       savedSearchStorage: getSavedSearchStorageStatus(),
-      alertSubscriptionStorage: getAlertSubscriptionStorageStatus()
+      alertSubscriptionStorage: getAlertSubscriptionStorageStatus(),
+      monitorScheduleStorage: getMonitorScheduleStorageStatus()
     },
     verification: {
       systemHealth: ok,
@@ -68,6 +70,7 @@ module.exports = async (req, res) => {
       providerExercise: { script: 'scripts/provider-exercise.js', requiresExplicitConfirmation: true },
       alertPreferences: 'browser-local-fallback',
       authenticatedAlertSubscriptions: getAlertSubscriptionStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
+      userMonitoringSchedules: getMonitorScheduleStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
       evidenceTimeline: 'configured',
       providerPack: { history: getHistoryStorageStatus(), alertOutbox: getAlertOutboxStatus(), alertDelivery: getAlertDeliveryStatus() },
       jobAvailability: 'not_verified',
@@ -75,6 +78,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 3.0 adds authenticated per-user alert subscriptions. The public browser-local preferences remain a fallback; authenticated users can persist alert categories through the identity and durable subscription provider boundary.'
+    note: 'MVP 3.1 adds authenticated user-owned monitoring schedules on top of the MVP 3.0 subscription and identity boundaries. Schedule execution remains bounded by the platform scheduler tick.'
   });
 };
