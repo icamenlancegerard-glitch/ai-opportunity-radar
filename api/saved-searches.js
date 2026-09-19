@@ -4,17 +4,11 @@ const {
   getSavedSearchStore,
   getSavedSearchStorageStatus
 } = require('../lib/saved-search-store');
+const { resolveRequestIdentity } = require('../lib/request-identity');
 const { validateSavedSearch } = require('../lib/saved-searches');
 
 // MVP 2.1 — server-side saved-search API.
 // Identity is client-supplied in this MVP; authentication/authorization is not implied.
-
-function getOwnerId(req) {
-  return req.headers?.['x-radar-user-id']
-    || req.headers?.['X-Radar-User-Id']
-    || req.query?.ownerId
-    || '';
-}
 
 function getBody(req) {
   if (!req.body) return {};
@@ -42,9 +36,10 @@ module.exports = async (req, res) => {
 
   let ownerId;
   try {
-    ownerId = normalizeOwnerId(getOwnerId(req));
+    const identity = await resolveRequestIdentity(req);
+    ownerId = normalizeOwnerId(identity.subject);
   } catch (error) {
-    return respondError(res, error.statusCode || 400, error.message, error.code);
+    return respondError(res, error.statusCode || 503, error.message, error.code);
   }
 
   const storage = getSavedSearchStorageStatus();
@@ -61,7 +56,7 @@ module.exports = async (req, res) => {
         durable: storage.durable,
         count: searches.length,
         searches,
-        note: 'Owner identity is client-supplied in MVP 2.1; authentication is not provided by this endpoint.'
+        note: 'Owner identity is derived from the authenticated identity provider; client-supplied owner IDs are ignored.'
       });
     }
 
