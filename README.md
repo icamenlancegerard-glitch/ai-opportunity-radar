@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.7 — evidence-first opportunity monitoring**
+**MVP 2.8 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -236,6 +236,59 @@ Tracking parameters are not silently stripped because their meaning is source-sp
 - Scheduled monitor uses active lifecycle entries: implemented
 - Real runtime source management persistence: not verified
 - Production deployment: remains blocked by the current Vercel build-rate limit
+
+## MVP 2.8 — real provider pack
+
+MVP 2.8 adds optional direct provider adapters for the existing contracts:
+
+- **Supabase Postgres** for durable history and alert outbox state.
+- **Resend** for direct email notification delivery.
+
+Supabase is used through its REST Data API and database RPC functions. Resend is called directly through its HTTPS email API.
+
+### Server environment
+
+Set these only on the server:
+
+- `RADAR_SUPABASE_URL`
+- `RADAR_SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `RADAR_ALERT_FROM`
+- `RADAR_ALERT_TO`
+
+The Supabase service-role key must never be shipped to the browser. The SQL migration enables RLS on the Radar tables and keeps them without public policies; the server adapter uses the service-role key for its private persistence boundary.
+
+### Supabase setup
+
+Run `supabase/mvp-2-8.sql` in the Supabase SQL editor.
+
+The SQL creates:
+- durable history records
+- durable alert outbox records
+- RPC functions for atomic alert claim
+- RPC functions for delivered/failed lifecycle transitions
+
+### Real exercise
+
+The repository includes:
+
+`node scripts/provider-exercise.js`
+
+The script refuses to run unless:
+
+`RADAR_PROVIDER_EXERCISE_CONFIRM=YES`
+
+It then:
+1. writes one real history record
+2. reads it back
+3. enqueues one real outbox event
+4. runs one real delivery cycle
+5. sends one real email through Resend
+6. verifies the outbox event reaches `delivered`
+
+Configuration is not the same as exercise. Only a successful real run should move those boundaries from `not_verified` to exercised in project notes.
+
+Production deployment remains separately unverified while the existing Vercel build-rate-limit blocker remains.
 
 ## MVP 2.7 — user evidence loop
 
