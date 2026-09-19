@@ -4,27 +4,32 @@ const { normalizeText, classifyAvailability } = require('../lib/availability-evi
 assert.equal(normalizeText('<div>Apply&nbsp;Now</div>'), 'apply now');
 
 assert.deepEqual(
-  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<button>Apply now</button>'),
+  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<button>Apply now</button>', 200),
   { status: 'OPEN_EVIDENCE', source: 'explicit_page_text', matchedSignals: ['OPEN:apply now'] }
 );
 
 assert.deepEqual(
-  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>This job is no longer available</div>'),
+  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>This job is no longer available</div>', 200),
   { status: 'CLOSED_EVIDENCE', source: 'explicit_page_text', matchedSignals: ['CLOSED:this job is no longer available'] }
 );
 
 assert.equal(
-  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>Apply now. No longer accepting applications.</div>').status,
+  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>Apply now. No longer accepting applications.</div>', 200).status,
   'CONFLICTING_EVIDENCE'
 );
 
 assert.equal(
-  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>Company overview and team culture</div>').status,
+  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>Company overview and team culture</div>', 200).status,
   'NOT_VERIFIED'
 );
 
 assert.equal(
-  classifyAvailability('https://example.com/job', 'Apply now').status,
+  classifyAvailability('https://ph.indeed.com/viewjob?jk=1', '<div>This job is no longer available</div>', 503).status,
+  'NOT_VERIFIED'
+);
+
+assert.equal(
+  classifyAvailability('https://example.com/job', 'Apply now', 200).status,
   'NOT_VERIFIED'
 );
 
