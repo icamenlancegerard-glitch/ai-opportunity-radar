@@ -1,17 +1,17 @@
-const { MONITORED_SOURCES } = require('../lib/monitored-sources');
+const { getMonitoredSources } = require('../lib/monitored-sources');
 const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { getHistoryStorageStatus } = require('../lib/history-store');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { getAlertOutbox, getAlertOutboxStatus } = require('../lib/alert-outbox');
 const { isAuthorizedCron } = require('../lib/cron-auth');
 
-// MVP 2.5 — scheduled monitoring loop with durable alert lifecycle.
+// MVP 2.6 — scheduled monitoring loop uses active source lifecycle registry.
 // Vercel Cron requests are authenticated with CRON_SECRET.
 // The loop rechecks sources, records history, and queues deterministic alerts.
 // It does not claim external delivery unless a separate delivery system is configured.
 
 async function runMonitor({
-  sources = MONITORED_SOURCES,
+  sources = getMonitoredSources().map(source => source.url),
   recheck = recheckAndRecord,
   makeAlerts = makeChangeAlerts,
   outbox = getAlertOutbox()
@@ -71,7 +71,7 @@ function failureSnapshot(url) {
 function buildMonitorResponse({ report, history, alertStore }) {
   return {
     ok: report.ok,
-    version: '2.5',
+    version: '2.6',
     monitoredSources: report.monitoredSources,
     processedSources: report.processedSources,
     recheckFailures: report.recheckFailures,
