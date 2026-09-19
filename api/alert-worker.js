@@ -66,6 +66,26 @@ async function runAlertDeliveryCycle({
 
     claimed += 1;
 
+    if (claimedEvent.ownerId && delivery.supportsUserRouting !== true) {
+      const error = new Error('Delivery provider does not declare support for user-routed alerts');
+      error.code = 'USER_ROUTING_UNSUPPORTED';
+      const failedEvent = await outbox.markFailed(claimedEvent.eventKey, {
+        error: error.message,
+        nextAttemptAt: null,
+        maxAttempts: claimedEvent.attempts
+      });
+      failed += 1;
+      results.push({
+        eventKey: claimedEvent.eventKey,
+        status: 'failed',
+        code: error.code,
+        attempts: claimedEvent.attempts,
+        error: error.message,
+        event: failedEvent
+      });
+      continue;
+    }
+
     try {
       const response = await delivery.send(claimedEvent);
       const completed = await outbox.markDelivered(claimedEvent.eventKey, { now });
