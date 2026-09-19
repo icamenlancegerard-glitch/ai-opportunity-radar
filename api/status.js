@@ -14,7 +14,7 @@ const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.6 — public read-only runtime status.
+// MVP 2.7 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '2.6',
+    version: '2.7',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -62,11 +62,13 @@ module.exports = async (req, res) => {
       alertDeliveryWorker: 'configured',
       scheduledMonitoring: 'configured',
       monitoredSourceLifecycle: 'configured',
+      evidenceWatchlist: 'browser-local',
+      evidenceTimeline: 'configured',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 2.6 adds deterministic monitored-source lifecycle metadata and stronger URL canonicalization. Durable storage and external notification remain not_verified unless their providers are configured and exercised.'
+    note: 'MVP 2.7 adds a browser-local evidence watchlist and source history timeline on top of deterministic monitored-source lifecycle and URL canonicalization. Durable storage and external notification remain not_verified unless their providers are configured and exercised.'
   });
 };

@@ -14,7 +14,7 @@ function mockResponse() {
   const res = mockResponse();
   await handler({ method: 'GET' }, res);
   assert.equal(res.statusCode, 200);
-  assert.equal(res.body.version, '2.2');
+  assert.equal(res.body.version, '2.7');
   assert.equal(Array.isArray(res.body.alerts), true);
   assert.equal(res.body.durable, false);
   assert.equal(res.body.monitoredSources, 5);
