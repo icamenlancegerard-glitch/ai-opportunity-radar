@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 1.7 — canonical, evidence-first AI opportunity discovery**
+**MVP 1.8 — canonical, evidence-first AI opportunity discovery**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -11,11 +11,11 @@ AI Opportunity Radar is a lightweight web prototype for finding AI-related work 
 - Freshness status based on recorded \`lastChecked\`
 - Direct source links
 - Shared, allowlisted server-side source policy
-- Canonical recheck pipeline: source policy → bounded content → availability evidence → PH eligibility evidence → snapshot → history → change detection → opportunity status
+- Canonical recheck pipeline: source policy → bounded content → availability evidence → PH eligibility evidence → compensation evidence → snapshot → history → change detection → opportunity status
 - Mobile-friendly UI
 - Explicit separation between source evidence, freshness, reachability, availability evidence, PH eligibility evidence, and final claims
 
-## MVP 1.7 evidence boundary
+## MVP 1.8 evidence boundary
 PH eligibility is represented as evidence:
 - **PH_ELIGIBLE_EVIDENCE:** explicit applicant/location language says the opportunity is available to people based in or residing in the Philippines
 - **PH_EXCLUDED_EVIDENCE:** explicit language excludes Philippine applicants or requires another jurisdiction
@@ -38,12 +38,10 @@ Persistent storage is still **not configured**; current history remains process-
 
 Freshness is a prioritization signal, not a truth claim.
 
-## Next build
+## Compensation evidence boundary\nCompensation is represented as evidence only when the bounded source text contains an explicit currency + amount/range + payment unit such as per hour or per month. Vague language such as “competitive salary,” a bare currency symbol, or an unrelated monetary amount remains **NOT_VERIFIED**. Multiple stated compensation entries are recorded as evidence; they are not automatically treated as contradictory without semantic grounds.\n\n## Next build
 1. Durable history persistence
 2. URL canonicalization beyond fragment normalization and deduplication
-3. Compensation evidence
-4. Saved searches and alerts
-5. Optional paid tier
+4. Optional paid tier
 
 ## Separation
 This project is separate from AI HITS and does not modify the AI HITS repositories.
