@@ -25,13 +25,14 @@ global.fetch = async () => ({ status, text: async () => body });
   assert.equal(second.snapshot.reachable, false);
   assert.deepEqual(second.history.changes, ['SOURCE_DOWN', 'HTTP_STATUS_CHANGED', 'AVAILABILITY_EVIDENCE_CHANGED']);
   assert.equal(second.opportunityStatus.sourceStatus, 'SOURCE_UNREACHABLE');
-  assert.equal(second.opportunityStatus.availability, 'CLOSED_EVIDENCE');
+  assert.equal(second.opportunityStatus.availability, 'NOT_VERIFIED');
 
   status = 200;
-  body = '<div>Apply now</div>';
+  body = '<div>This job is no longer available</div>';
   const third = await recheckAndRecord('https://ph.indeed.com/viewjob?jk=abc', store);
   assert.equal(third.opportunityStatus.sourceStatus, 'SOURCE_RECOVERED');
   assert.deepEqual(third.history.changes, ['SOURCE_RECOVERED', 'HTTP_STATUS_CHANGED', 'AVAILABILITY_EVIDENCE_CHANGED']);
+  assert.equal(third.opportunityStatus.availability, 'CLOSED_EVIDENCE');
 
   await assert.rejects(
     () => checkSource('https://example.com/job'),
