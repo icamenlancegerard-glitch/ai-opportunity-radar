@@ -212,7 +212,7 @@ Each source has:
 
 Only `active` sources are returned to the scheduled monitor. The registry validates duplicate IDs and duplicate canonical URLs before startup.
 
-A read-only registry surface is available at `/api/monitored-sources`. Lifecycle mutation is intentionally configuration-backed for now; a durable management API is not claimed.
+The monitored-source lifecycle registry is exposed through the runtime status surface; lifecycle mutation is intentionally configuration-backed for now, and a durable management API is not claimed.
 
 ### URL canonicalization
 
