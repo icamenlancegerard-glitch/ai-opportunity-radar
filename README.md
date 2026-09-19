@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 3.0 — evidence-first opportunity monitoring**
+**MVP 3.1 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -237,6 +237,27 @@ Tracking parameters are not silently stripped because their meaning is source-sp
 - Real runtime source management persistence: not verified
 - Production deployment: remains blocked by the current Vercel build-rate limit
 
+
+## MVP 3.1 — user monitoring schedules
+
+MVP 3.1 adds authenticated, user-owned monitoring schedule rules.
+
+- `GET/POST/PATCH/DELETE /api/monitor-schedules` manages schedules scoped to the authenticated identity subject.
+- A schedule supports a bounded cadence of 1, 3, 7, 14, or 30 days.
+- A schedule can target selected active monitored source IDs, or all active monitored sources when the scope is empty.
+- `/api/user-monitor-scheduler` evaluates due schedules from the durable schedule store and reuses the existing evidence → history → deterministic alert pipeline.
+- Schedule claims use a lease in the durable provider to reduce duplicate concurrent execution.
+- The platform cron invokes the scheduler tick daily; a requested cadence is therefore a desired evaluation cadence, not an exact wall-clock execution guarantee.
+
+### MVP 3.1 verification boundary
+
+- Schedule normalization and due-run calculation: tested
+- User schedule store isolation and limits: tested
+- Authenticated schedule API owner isolation: tested
+- Due scheduler source scoping and next-run advancement: tested
+- Real durable schedule persistence: not verified until Supabase is exercised with the new migration
+- Real production scheduler execution: not verified while the Vercel deployment blocker remains
+- Exact wall-clock scheduling: not claimed
 
 ## MVP 3.0 — authenticated alert subscriptions
 

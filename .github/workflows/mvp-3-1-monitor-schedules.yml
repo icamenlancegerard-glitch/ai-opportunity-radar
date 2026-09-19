@@ -1,0 +1,50 @@
+name: MVP 3.1 User Monitoring Schedules
+
+on:
+  push:
+    paths:
+      - 'api/monitor-schedules.js'
+      - 'api/user-monitor-scheduler.js'
+      - 'lib/monitor-schedules.js'
+      - 'lib/monitor-schedule-store.js'
+      - 'tests/monitor-schedules.test.js'
+      - 'tests/monitor-schedule-store.test.js'
+      - 'tests/monitor-schedule-api.test.js'
+      - 'tests/user-monitor-scheduler.test.js'
+      - 'supabase/mvp-3-1.sql'
+      - 'monitor-schedules-ui.js'
+      - 'vercel.json'
+      - 'monitor-schedules-ui.js'
+      - 'vercel.json'
+  pull_request:
+    paths:
+      - 'api/monitor-schedules.js'
+      - 'api/user-monitor-scheduler.js'
+      - 'lib/monitor-schedules.js'
+      - 'lib/monitor-schedule-store.js'
+      - 'tests/monitor-schedules.test.js'
+      - 'tests/monitor-schedule-store.test.js'
+      - 'tests/monitor-schedule-api.test.js'
+      - 'tests/user-monitor-scheduler.test.js'
+      - 'supabase/mvp-3-1.sql'
+
+jobs:
+  monitor-schedules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run MVP 3.1 contract tests
+        run: |
+          set -euo pipefail
+          node tests/alert-preferences.test.js
+          node tests/alert-subscriptions.test.js
+          node tests/alert-subscription-api.test.js
+          node tests/user-alerts-filter.test.js
+          node tests/monitor-schedules.test.js
+          node tests/monitor-schedule-store.test.js
+          node tests/monitor-schedule-api.test.js
+          node tests/user-monitor-scheduler.test.js
+          node --check monitor-schedules-ui.js
