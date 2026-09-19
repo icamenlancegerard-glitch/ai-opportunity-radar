@@ -5,7 +5,7 @@ const { makeChangeAlerts } = require('../lib/change-alerts');
 const { getAlertOutbox, getAlertOutboxStatus } = require('../lib/alert-outbox');
 const { isAuthorizedCron } = require('../lib/cron-auth');
 
-// MVP 2.4 — scheduled monitoring loop.
+// MVP 2.5 — scheduled monitoring loop with durable alert lifecycle.
 // Vercel Cron requests are authenticated with CRON_SECRET.
 // The loop rechecks sources, records history, and queues deterministic alerts.
 // It does not claim external delivery unless a separate delivery system is configured.
@@ -68,24 +68,10 @@ function failureSnapshot(url) {
   };
 }
 
-module.exports = async (req, res) => {
-  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'GET only' });
-  if (!isAuthorizedCron(req)) {
-    return res.status(401).json({
-      ok: false,
-      version: '2.4',
-      error: 'Unauthorized cron request',
-      code: 'CRON_UNAUTHORIZED'
-    });
-  }
-
-  const report = await runMonitor();
-  const history = getHistoryStorageStatus();
-  const alertStore = getAlertOutboxStatus();
-
-  return res.status(200).json({
+function buildMonitorResponse({ report, history, alertStore }) {
+  return {
     ok: report.ok,
-    version: '2.4',
+    version: '2.5',
     monitoredSources: report.monitoredSources,
     processedSources: report.processedSources,
     recheckFailures: report.recheckFailures,
@@ -96,8 +82,27 @@ module.exports = async (req, res) => {
     alertOutboxDurable: alertStore.durable,
     results: report.results,
     note: 'Scheduled monitoring records bounded evidence changes and queues deterministic alerts. External notification delivery is not performed by this monitor.'
-  });
+  };
+}
+
+module.exports = async (req, res) => {
+  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'GET only' });
+  if (!isAuthorizedCron(req)) {
+    return res.status(401).json({
+      ok: false,
+      version: '2.5',
+      error: 'Unauthorized cron request',
+      code: 'CRON_UNAUTHORIZED'
+    });
+  }
+
+  const report = await runMonitor();
+  const history = getHistoryStorageStatus();
+  const alertStore = getAlertOutboxStatus();
+
+  return res.status(200).json(buildMonitorResponse({ report, history, alertStore }));
 };
 
 module.exports.isAuthorizedCron = isAuthorizedCron;
 module.exports.runMonitor = runMonitor;
+module.exports.buildMonitorResponse = buildMonitorResponse;
