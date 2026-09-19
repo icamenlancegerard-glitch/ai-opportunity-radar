@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 3.1 — evidence-first opportunity monitoring**
+**MVP 3.2 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -259,6 +259,28 @@ MVP 3.1 adds authenticated, user-owned monitoring schedule rules.
 - Real production scheduler execution: not verified while the Vercel deployment blocker remains
 - Exact wall-clock scheduling: not claimed
 
+## MVP 3.2 — subscription-aware alert delivery routing
+
+MVP 3.2 closes the routing boundary between authenticated monitoring schedules and user-owned alert subscriptions.
+
+- User schedule execution still records evidence/history through the existing canonical recheck pipeline.
+- Generated change alerts are enriched with the monitored source ID and routed only when they match the authenticated owner's active alert subscriptions.
+- A routed outbox event carries `ownerId`, matching `subscriptionIds`, and `deliveryScope: "user"`.
+- User-routed event keys are namespaced by owner so two users cannot collapse into the same delivery event.
+- A delivery worker fails closed when the configured provider does not explicitly declare support for user-routed alerts; it does not silently send a user-scoped event to a static/global recipient.
+- The existing read-only `/api/user-alerts` path remains the inbox view over recorded alerts; routing metadata does not alter evidence or deterministic alert generation.
+
+### MVP 3.2 verification boundary
+
+- Schedule → authenticated subscription matching: covered by deterministic tests
+- User owner propagation from schedule claim into routing: covered by scheduler/store tests
+- Per-owner outbox event-key isolation: implemented and covered by routing/outbox contract
+- Unsupported user-routing delivery: fail-closed test coverage
+- Real Supabase schedule/subscription/outbox exercise: not verified
+- Real identity-provider account/session: not verified
+- Real user-routed external notification delivery: not verified
+- Production deployment/runtime: still blocked by the existing Vercel build-rate-limit failure
+
 ## MVP 3.0 — authenticated alert subscriptions
 
 MVP 3.0 adds user-owned alert subscriptions on top of the existing authenticated identity boundary.
@@ -297,11 +319,10 @@ Preferences are browser-local for this MVP. Authenticated per-user subscriptions
 
 ## Next build
 
-1. Exercise the real Supabase + Resend provider path
-2. Add authenticated per-user alert subscriptions
-3. Add user-configurable monitoring schedules
-4. Add durable source-management mutations
-5. Improve opportunity ingestion/refresh beyond the current static seed
+1. Exercise the real Supabase + identity + delivery provider path
+2. Add durable source-management mutations
+3. Improve opportunity ingestion/refresh beyond the current static seed
+4. Add evidence freshness/recheck controls for user watch targets
 
 ## MVP 2.8 — real provider pack
 

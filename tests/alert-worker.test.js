@@ -71,6 +71,35 @@ const now = new Date('2026-09-19T01:00:00.000Z');
   assert.equal((await retryOutbox.list())[0].status, 'failed');
   assert.equal((await retryOutbox.list())[0].nextAttemptAt, null);
 
+  const routedOutbox = createMemoryAlertOutbox();
+  const routedAlice = await routedOutbox.enqueue({
+    ...alert,
+    ownerId: 'alice',
+    subscriptionIds: ['sub-availability'],
+    code: 'AVAILABILITY_OPENED'
+  });
+  const routedBob = await routedOutbox.enqueue({
+    ...alert,
+    ownerId: 'bob',
+    subscriptionIds: ['sub-availability'],
+    code: 'AVAILABILITY_OPENED'
+  });
+  assert.notEqual(routedAlice.eventKey, routedBob.eventKey);
+  assert.equal((await routedOutbox.list()).length, 2);
+  const routedSend = [];
+  const routed = await runAlertDeliveryCycle({
+    outbox: routedOutbox,
+    delivery: {
+      supportsUserRouting: false,
+      async send(event) { routedSend.push(event); return { accepted: true }; }
+    },
+    now
+  });
+  assert.equal(routed.failed, 2);
+  assert.equal(routedSend.length, 0);
+  assert.equal(routed.results.every(result => result.code === 'USER_ROUTING_UNSUPPORTED'), true);
+  assert.equal((await routedOutbox.list())[0].status, 'failed');
+
   const unconfigured = await runAlertDeliveryCycle({
     outbox: createMemoryAlertOutbox(),
     delivery: null,
