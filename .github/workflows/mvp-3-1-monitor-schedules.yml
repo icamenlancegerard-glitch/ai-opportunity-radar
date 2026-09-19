@@ -12,6 +12,10 @@ on:
       - 'tests/monitor-schedule-api.test.js'
       - 'tests/user-monitor-scheduler.test.js'
       - 'supabase/mvp-3-1.sql'
+      - 'monitor-schedules-ui.js'
+      - 'vercel.json'
+      - 'monitor-schedules-ui.js'
+      - 'vercel.json'
   pull_request:
     paths:
       - 'api/monitor-schedules.js'
@@ -43,3 +47,4 @@ jobs:
           node tests/monitor-schedule-store.test.js
           node tests/monitor-schedule-api.test.js
           node tests/user-monitor-scheduler.test.js
+          node --check monitor-schedules-ui.js
