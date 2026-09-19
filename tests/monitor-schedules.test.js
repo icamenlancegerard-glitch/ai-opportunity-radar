@@ -22,6 +22,15 @@ assert.equal(normalizeCadenceDays(7), 7);
 assert.equal(normalizeCadenceDays(999), 7);
 assert.deepEqual(ALLOWED_CADENCE_DAYS, [1, 3, 7, 14, 30]);
 
+assert.throws(
+  () => require('../lib/monitor-schedules').validateScheduleInput({
+    name: 'Invalid scoped schedule',
+    cadenceDays: 7,
+    sourceIds: ['bad space', '@@@']
+  }),
+  /no valid monitored source ids/
+);
+
 const schedule = normalizeSchedule({
   id: 'schedule-1',
   name: 'Every week',
