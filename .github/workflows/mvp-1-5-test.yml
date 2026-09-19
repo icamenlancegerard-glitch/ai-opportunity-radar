@@ -1,0 +1,21 @@
+name: MVP 1.5 Canonical Pipeline Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  canonical-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run source policy tests
+        run: node tests/source-policy.test.js
+      - name: Run canonical recheck pipeline tests
+        run: node tests/recheck-pipeline.test.js
