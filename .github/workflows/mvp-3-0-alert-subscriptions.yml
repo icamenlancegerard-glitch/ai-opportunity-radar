@@ -37,4 +37,5 @@ jobs:
           set -euo pipefail
           node tests/alert-preferences.test.js
           node tests/alert-subscriptions.test.js
+          node tests/alert-subscription-api.test.js
           node tests/user-alerts-filter.test.js
