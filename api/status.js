@@ -8,6 +8,9 @@ const { classifyCompensation } = require('../lib/compensation-evidence');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { validateSavedSearch, matchesSavedSearch } = require('../lib/saved-searches');
 const { getSavedSearchStorageStatus } = require('../lib/saved-search-store');
+const { getIdentityStatus } = require('../lib/request-identity');
+const { getAlertOutboxStatus } = require('../lib/alert-outbox');
+const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
 // MVP 2.2 — public read-only runtime status.
@@ -35,6 +38,9 @@ module.exports = async (req, res) => {
       compensationEvidence: typeof classifyCompensation === 'function',
       changeAlerts: typeof makeChangeAlerts === 'function',
       alertInbox: true,
+      identity: getIdentityStatus(),
+      alertOutbox: getAlertOutboxStatus(),
+      alertDelivery: getAlertDeliveryStatus(),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
@@ -46,6 +52,9 @@ module.exports = async (req, res) => {
     verification: {
       systemHealth: ok,
       durableHistory: storage.durable ? 'configured' : 'not_verified',
+      authenticatedIdentity: getIdentityStatus().configured ? 'provider-backed' : 'not_verified',
+      durableAlertOutbox: getAlertOutboxStatus().durable ? 'configured' : 'not_verified',
+      externalAlertDelivery: getAlertDeliveryStatus().configured ? 'provider-backed' : 'not_verified',
       jobAvailability: 'not_verified',
       phEligibility: 'not_verified',
       compensation: 'not_verified',
