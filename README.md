@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.9 — evidence-first opportunity monitoring**
+**MVP 3.0 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -236,6 +236,30 @@ Tracking parameters are not silently stripped because their meaning is source-sp
 - Scheduled monitor uses active lifecycle entries: implemented
 - Real runtime source management persistence: not verified
 - Production deployment: remains blocked by the current Vercel build-rate limit
+
+
+## MVP 3.0 — authenticated alert subscriptions
+
+MVP 3.0 adds user-owned alert subscriptions on top of the existing authenticated identity boundary.
+
+- `GET/POST/PATCH/DELETE /api/alert-subscriptions` manages subscriptions scoped to the authenticated identity subject.
+- `GET /api/user-alerts` returns monitored alerts filtered by that user's active subscription rules.
+- Alert categories remain the four MVP 2.9 groups: source health, availability, Philippines eligibility, and compensation.
+- Optional source IDs let a subscription scope matching to selected monitored sources.
+- Supabase uses the existing server-side service-role persistence boundary through `radar_alert_subscriptions`.
+- Without a configured subscription provider, storage is explicitly `memory-only` and `durable:false`.
+- Bearer tokens used by the static UI are kept in `sessionStorage` for the current browser session; no password flow is implemented here.
+
+The authenticated subscription path does not alter recorded evidence or deterministic alert generation. It applies user-specific filtering after alerts are produced.
+
+### MVP 3.0 verification boundary
+
+- Subscription normalization and matching: tested
+- User owner isolation at the store boundary: tested
+- Authenticated API owner derivation/mismatch behavior: tested in the repository test contract
+- Real Supabase subscription persistence: not verified until the provider is actually exercised
+- Real identity-provider account/session: not verified until exercised
+- Production deployment: remains blocked by the existing Vercel build-rate-limit failure
 
 ## MVP 2.9 — alert preferences
 
