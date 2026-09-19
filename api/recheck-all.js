@@ -8,13 +8,14 @@ const SOURCES = [
 
 const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { getHistoryStorageStatus } = require('../lib/history-store');
+const { makeChangeAlerts } = require('../lib/change-alerts');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
   const results = await Promise.all(SOURCES.map(async (url) => {
     try {
-      return await recheckAndRecord(url);
+      const result = await recheckAndRecord(url);\n      return { ...result, alerts: makeChangeAlerts(result.history) };
     } catch (error) {
       return {
         snapshot: {
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
 
   const storage = getHistoryStorageStatus();
   const reachable = results.filter(x => x.snapshot?.reachable === true).length;
-  const changed = results.filter(x => x.history?.changed === true).length;
+  const changed = results.filter(x => x.history?.changed === true).length;\n  const alertCount = results.reduce((sum, x) => sum + (Array.isArray(x.alerts) ? x.alerts.length : 0), 0);
   const availability = {
     open: results.filter(x => x.opportunityStatus?.availability === 'OPEN_EVIDENCE').length,
     closed: results.filter(x => x.opportunityStatus?.availability === 'CLOSED_EVIDENCE').length,
@@ -50,16 +51,17 @@ module.exports = async (req, res) => {
 
   return res.status(200).json({
     ok: true,
-    version: '1.8',
+    version: '2.0',
     storage: storage.storage,
     durable: storage.durable,
     count: results.length,
     reachable,
     changed,
+    alertCount,
     availabilityEvidence: availability,
     phEligibilityEvidence: phEligibility,
     compensationEvidence,
     results,
-    note: 'Scheduled checks use the same canonical pipeline. Evidence states come from bounded source text and do not guarantee hiring, eligibility, compensation, or continued availability.'
+    note: 'Scheduled checks use the canonical evidence pipeline and emit deterministic change-alert events. No external notification is sent.'
   });
 };
