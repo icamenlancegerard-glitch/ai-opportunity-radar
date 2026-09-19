@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { isAuthorizedCron, runMonitor } = require('../api/monitor');
+const { isAuthorizedCron, runMonitor, buildMonitorResponse } = require('../api/monitor');
 
 assert.equal(isAuthorizedCron({ headers: { authorization: 'Bearer test' } }), false);
 process.env.CRON_SECRET = 'test';
@@ -8,6 +8,23 @@ assert.equal(isAuthorizedCron({ headers: { authorization: 'Bearer wrong' } }), f
 delete process.env.CRON_SECRET;
 assert.equal(isAuthorizedCron({ headers: { authorization: 'Bearer test' } }), false);
 
+
+
+const response = buildMonitorResponse({
+  report: {
+    ok: true,
+    monitoredSources: 1,
+    processedSources: 1,
+    recheckFailures: 0,
+    queuedAlerts: 1,
+    results: [{ url: 'https://example.test/a', ok: true, alerts: [] }]
+  },
+  history: { storage: 'memory-only', durable: false },
+  alertStore: { storage: 'memory-only', durable: false }
+});
+assert.equal(response.results.length, 1);
+assert.equal(response.results[0].url, 'https://example.test/a');
+assert.equal(response.version, '2.5');
 (async () => {
   const events = [];
   const outbox = {
