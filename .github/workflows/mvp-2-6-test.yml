@@ -1,4 +1,4 @@
-name: MVP 2.6 Source Lifecycle Tests
+name: MVP 2.7 User Evidence Loop Tests
 
 on:
   push:
@@ -21,3 +21,5 @@ jobs:
         run: node tests/monitored-sources.test.js
       - name: Run monitor tests
         run: node tests/monitor.test.js
+      - name: Run alert inbox tests
+        run: node tests/alerts-all.test.js
