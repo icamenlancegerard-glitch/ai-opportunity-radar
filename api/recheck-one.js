@@ -11,11 +11,11 @@ module.exports = async (req, res) => {
     const storage = getHistoryStorageStatus();
     return res.status(200).json({
       ok: true,
-      version: '1.7',
+      version: '1.8',
       ...result,
       storage: storage.storage,
       durable: storage.durable,
-      note: 'The canonical pipeline derives explicit availability and Philippines eligibility evidence from bounded source text. These evidence states do not guarantee hiring, eligibility, compensation, or continued availability.'
+      note: 'The canonical pipeline derives explicit availability, Philippines eligibility, and compensation evidence from bounded source text. These evidence states do not guarantee hiring, eligibility, compensation, or continued availability.'
     });
   } catch (error) {
     const status = error && error.code === 'SOURCE_POLICY_REJECTED'
