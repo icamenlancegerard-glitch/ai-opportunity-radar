@@ -1,0 +1,25 @@
+name: MVP 2.5 Alert Lifecycle Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test-alert-lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run monitor tests
+        run: node tests/monitor.test.js
+      - name: Run outbox lifecycle tests
+        run: node tests/alert-outbox.test.js
+      - name: Run alert delivery boundary tests
+        run: node tests/alert-delivery.test.js
+      - name: Run alert worker tests
+        run: node tests/alert-worker.test.js
