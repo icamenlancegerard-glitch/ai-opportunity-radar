@@ -3,6 +3,8 @@ const { getMonitoredSources } = require('../lib/monitored-sources');
 const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { getAlertOutbox } = require('../lib/alert-outbox');
+const { getAlertSubscriptionStore } = require('../lib/alert-subscription-store');
+const { routeAlertsForOwner } = require('../lib/alert-routing');
 const { isAuthorizedCron } = require('../lib/cron-auth');
 const { calculateNextRunAt, isDue } = require('../lib/monitor-schedules');
 
@@ -16,6 +18,7 @@ async function runUserMonitorScheduler({
   recheck = recheckAndRecord,
   makeAlerts = makeChangeAlerts,
   outbox = getAlertOutbox(),
+  subscriptionStore = getAlertSubscriptionStore(),
   now = new Date(),
   maxSchedules = 25
 } = {}) {
@@ -30,6 +33,8 @@ async function runUserMonitorScheduler({
   let processed = 0;
   let skipped = 0;
   let queuedAlerts = 0;
+  let matchedAlerts = 0;
+  let suppressedAlerts = 0;
   let failures = 0;
   const results = [];
 
@@ -53,15 +58,38 @@ async function runUserMonitorScheduler({
       ? claimed.sourceIds
           .map(id => activeSources.get(id))
           .filter(Boolean)
-      : [...activeSources.values()];
+      : [...normalizedSources];
 
     try {
+      const ownerId = typeof claimed.ownerId === 'string' ? claimed.ownerId.trim() : '';
+      if (!ownerId) {
+        const error = new Error('Schedule owner identity is unavailable');
+        error.code = 'SCHEDULE_OWNER_UNAVAILABLE';
+        throw error;
+      }
+
+      const subscriptions = typeof subscriptionStore?.list === 'function'
+        ? await subscriptionStore.list(ownerId)
+        : [];
+
       let scheduleAlerts = 0;
-      for (const url of selected) {
-        const result = await recheck(url);
-        const alerts = makeAlerts(result.history);
-        for (const alert of alerts) {
-          await outbox.enqueue({ ...alert, sourceUrl: url });
+      let scheduleMatched = 0;
+      let scheduleSuppressed = 0;
+
+      for (const source of selected) {
+        const result = await recheck(source.url);
+        const alerts = makeAlerts(result.history).map(alert => ({
+          ...alert,
+          sourceId: source.id || null,
+          sourceUrl: source.url
+        }));
+
+        const routed = routeAlertsForOwner(alerts, ownerId, subscriptions);
+        scheduleMatched += routed.length;
+        scheduleSuppressed += Math.max(0, alerts.length - routed.length);
+
+        for (const alert of routed) {
+          await outbox.enqueue(alert);
           scheduleAlerts += 1;
         }
       }
@@ -77,10 +105,16 @@ async function runUserMonitorScheduler({
 
       processed += 1;
       queuedAlerts += scheduleAlerts;
+      matchedAlerts += scheduleMatched;
+      suppressedAlerts += scheduleSuppressed;
       results.push({
         scheduleId: claimed.id,
         ok: true,
+        ownerId,
+        activeSubscriptions: subscriptions.filter(subscription => subscription.enabled !== false).length,
         sourcesEvaluated: selected.length,
+        matchedAlerts: scheduleMatched,
+        suppressedAlerts: scheduleSuppressed,
         queuedAlerts: scheduleAlerts,
         nextRunAt
       });
@@ -104,6 +138,8 @@ async function runUserMonitorScheduler({
     skippedSchedules: skipped,
     failedSchedules: failures,
     queuedAlerts,
+    matchedAlerts,
+    suppressedAlerts,
     results
   };
 }
@@ -122,9 +158,9 @@ module.exports = async (req, res) => {
   const report = await runUserMonitorScheduler();
   return res.status(200).json({
     ok: report.ok,
-    version: '3.1',
+    version: '3.2',
     ...report,
-    note: 'User monitoring schedules are durable rules evaluated by a platform scheduler tick. Exact requested execution times are not guaranteed by this endpoint.'
+    note: 'User schedules still use a platform scheduler tick. Generated evidence alerts are routed into the authenticated owner\'s active subscriptions before entering the delivery outbox; exact wall-clock execution and external delivery remain separate verification boundaries.'
   });
 };
 
