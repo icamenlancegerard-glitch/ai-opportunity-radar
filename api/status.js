@@ -14,7 +14,7 @@ const { getAlertDeliveryStatus } = require('../lib/alert-delivery');
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 2.5 — public read-only runtime status.
+// MVP 2.6 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
