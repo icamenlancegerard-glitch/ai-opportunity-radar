@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 2.3 — evidence-first opportunity monitoring**
+**MVP 2.4 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -114,3 +114,33 @@ No email, push, SMS, or other external delivery is claimed unless that provider 
 ### Current verification boundary
 
 The repository can test all three provider boundaries with mocked HTTPS calls, but provider configuration is still a deployment concern. Without configured providers, runtime status remains explicit about `not_verified` / `not-configured` states.
+
+
+## MVP 2.4 — scheduled monitoring
+
+The Radar now has a protected scheduled monitor at `/api/monitor`.
+
+Vercel Cron is configured for:
+- path: `/api/monitor`
+- schedule: `0 2 * * *`
+
+The endpoint requires `Authorization: Bearer <CRON_SECRET>`. It rechecks the canonical monitored sources through the existing evidence pipeline, records history, derives deterministic change alerts, and queues those alerts in the configured outbox.
+
+The monitor does not automatically claim external notification delivery. With no durable history/outbox provider, the scheduled process remains explicitly non-durable across serverless invocations.
+
+### MVP 2.4 verification boundary
+
+- Cron handler authentication: tested
+- Monitoring loop behavior: tested with deterministic mocks
+- Existing Radar regression suites: retained
+- Real cron execution in production: not verified while Vercel deployment is blocked by the current build-rate limit
+- Durable history/outbox: not verified until providers are actually configured
+- External alert delivery: not verified until delivery provider is actually configured and exercised
+
+## Next build
+
+1. Real authenticated identity provider integration
+2. Real durable database/history + outbox provider
+3. Production email/push delivery
+4. URL canonicalization and monitored-source lifecycle management
+5. User-configurable schedules
