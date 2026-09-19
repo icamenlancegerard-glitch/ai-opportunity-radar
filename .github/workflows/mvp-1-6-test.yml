@@ -1,4 +1,4 @@
-name: MVP 1.9 Evidence Tests
+name: MVP 2.0 Evidence Tests
 
 on:
   push:
@@ -27,5 +27,9 @@ jobs:
         run: node tests/history-engine.test.js
       - name: Run opportunity status tests
         run: node tests/opportunity-status.test.js
+      - name: Run change alert tests
+        run: node tests/change-alerts.test.js
+      - name: Run saved search tests
+        run: node tests/saved-searches.test.js
       - name: Run canonical recheck pipeline tests
         run: node tests/recheck-pipeline.test.js
