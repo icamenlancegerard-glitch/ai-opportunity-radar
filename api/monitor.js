@@ -3,17 +3,12 @@ const { recheckAndRecord } = require('../lib/recheck-pipeline');
 const { getHistoryStorageStatus } = require('../lib/history-store');
 const { makeChangeAlerts } = require('../lib/change-alerts');
 const { getAlertOutbox, getAlertOutboxStatus } = require('../lib/alert-outbox');
+const { isAuthorizedCron } = require('../lib/cron-auth');
 
 // MVP 2.4 — scheduled monitoring loop.
 // Vercel Cron requests are authenticated with CRON_SECRET.
 // The loop rechecks sources, records history, and queues deterministic alerts.
 // It does not claim external delivery unless a separate delivery system is configured.
-
-function isAuthorizedCron(req) {
-  const configured = typeof process.env.CRON_SECRET === 'string' && process.env.CRON_SECRET.length > 0;
-  const presented = req.headers?.authorization || req.headers?.Authorization || '';
-  return configured && presented === `Bearer ${process.env.CRON_SECRET}`;
-}
 
 async function runMonitor({
   sources = MONITORED_SOURCES,
@@ -99,7 +94,7 @@ module.exports = async (req, res) => {
     historyDurable: history.durable,
     alertOutboxStorage: alertStore.storage,
     alertOutboxDurable: alertStore.durable,
-    results,
+    results: report.results,
     note: 'Scheduled monitoring records bounded evidence changes and queues deterministic alerts. External notification delivery is not performed by this monitor.'
   });
 };
