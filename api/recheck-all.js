@@ -15,7 +15,8 @@ module.exports = async (req, res) => {
 
   const results = await Promise.all(SOURCES.map(async (url) => {
     try {
-      const result = await recheckAndRecord(url);\n      return { ...result, alerts: makeChangeAlerts(result.history) };
+      const result = await recheckAndRecord(url);
+      return { ...result, alerts: makeChangeAlerts(result.history) };
     } catch (error) {
       return {
         snapshot: {
@@ -34,7 +35,8 @@ module.exports = async (req, res) => {
 
   const storage = getHistoryStorageStatus();
   const reachable = results.filter(x => x.snapshot?.reachable === true).length;
-  const changed = results.filter(x => x.history?.changed === true).length;\n  const alertCount = results.reduce((sum, x) => sum + (Array.isArray(x.alerts) ? x.alerts.length : 0), 0);
+  const changed = results.filter(x => x.history?.changed === true).length;
+  const alertCount = results.reduce((sum, x) => sum + (Array.isArray(x.alerts) ? x.alerts.length : 0), 0);
   const availability = {
     open: results.filter(x => x.opportunityStatus?.availability === 'OPEN_EVIDENCE').length,
     closed: results.filter(x => x.opportunityStatus?.availability === 'CLOSED_EVIDENCE').length,
