@@ -124,10 +124,13 @@
   }
 
   async function loadSources() {
-    const response = await request('/api/monitored-sources');
+    const response = await request('/api/status');
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Source registry load failed');
-    renderSources(Array.isArray(data.sources) ? data.sources : []);
+    if (!response.ok) throw new Error(data.error || 'Runtime status load failed');
+    const sources = data.runtime && Array.isArray(data.runtime.monitoredSources)
+      ? data.runtime.monitoredSources
+      : [];
+    renderSources(sources);
   }
 
   async function loadSchedules() {

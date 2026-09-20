@@ -47,6 +47,7 @@ module.exports = async (req, res) => {
       alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
       scheduledMonitor: { enabled: true, monitoredSources: getMonitoredSources().length, cronPath: '/api/monitor' },
       monitoredSourceLifecycle: getMonitoredSourceStatus(),
+      monitoredSources: getMonitoredSources({ includeInactive: true }),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
       canonicalPipeline: pipelineReady,
       sourcePolicy: policy,
