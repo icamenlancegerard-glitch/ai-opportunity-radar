@@ -15,8 +15,9 @@ const { getAlertSubscriptionStorageStatus } = require('../lib/alert-subscription
 const { getMonitorScheduleStorageStatus } = require('../lib/monitor-schedule-store');
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
+const { getReadiness } = require('../scripts/provider-readiness');
 
-// MVP 3.0 — public read-only runtime status.
+// MVP 3.5 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '3.4',
+    version: '3.5',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -47,6 +48,7 @@ module.exports = async (req, res) => {
       alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
       scheduledMonitor: { enabled: true, monitoredSources: getMonitoredSources().length, cronPath: '/api/monitor' },
       freshnessControl: { enabled: true, batchPath: '/api/recheck-one', batchMode: 'POST { urls }', maxUrls: 10, autonomousDiscovery: false },
+      providerReadiness: getReadiness(),
       monitoredSourceLifecycle: getMonitoredSourceStatus(),
       monitoredSources: getMonitoredSources({ includeInactive: true }),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
@@ -69,7 +71,7 @@ module.exports = async (req, res) => {
       scheduledMonitoring: 'configured',
       monitoredSourceLifecycle: 'configured',
       evidenceWatchlist: 'browser-local',
-      providerExercise: { script: 'scripts/provider-exercise.js', requiresExplicitConfirmation: true },
+      providerExercise: { historyScript: 'scripts/history-provider-exercise.js', fullStackScript: 'scripts/provider-exercise.js', requiresExplicitConfirmation: true },
       alertPreferences: 'browser-local-fallback',
       authenticatedAlertSubscriptions: getAlertSubscriptionStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
       userMonitoringSchedules: getMonitorScheduleStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
@@ -81,6 +83,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 3.4 adds bounded batch evidence recheck and freshness-control tooling. It does not claim autonomous search-result ingestion or hiring truth.'
+    note: 'MVP 3.5 adds provider-readiness reporting and a Supabase-only durable-history exercise. Configuration is not treated as provider verification; autonomous search-result ingestion and hiring truth remain unclaimed.'
   });
 };
