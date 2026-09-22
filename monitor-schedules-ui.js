@@ -34,6 +34,127 @@
     if (el) el.textContent = message;
   }
 
+  const MAX_REFRESH_URLS = 10;
+
+  function freshnessPanelState(message) {
+    const el = document.getElementById('freshnessControlState');
+    if (el) el.textContent = message;
+  }
+
+  function visibleSourceUrls() {
+    const urls = [...document.querySelectorAll('#grid a.source')]
+      .map((link) => link.href)
+      .filter(Boolean);
+    return [...new Set(urls)].slice(0, MAX_REFRESH_URLS);
+  }
+
+  function renderRefreshResults(report) {
+    const box = document.getElementById('freshnessControlResults');
+    if (!box) return;
+
+    if (!report || !Array.isArray(report.results)) {
+      box.textContent = 'No refresh results returned.';
+      return;
+    }
+
+    box.innerHTML = report.results.map((item) => {
+      const changes = item.changes?.length ? ' · changes: ' + esc(item.changes.join(', ')) : '';
+      const evidence =
+        'Source: ' + esc(item.sourceStatus) +
+        ' · Availability: ' + esc(item.availability) +
+        ' · PH: ' + esc(item.eligibility) +
+        ' · Pay: ' + esc(item.pay) +
+        ' · Hiring: ' + esc(item.hiringStatus);
+
+      return '<div class="evidence" style="margin-top:8px">' +
+        '<strong>' + (item.reachable ? 'REACHABLE' : 'UNREACHABLE') + '</strong>' +
+        ' · HTTP ' + esc(item.httpStatus ?? 'UNKNOWN') +
+        '<br><small>' + evidence + changes +
+        '<br>Checked: ' + esc(item.checkedAt) +
+        '<br>' + esc(item.url) + '</small></div>';
+    }).join('');
+
+    if (report.blockedResults?.length) {
+      box.innerHTML += report.blockedResults.map((item) =>
+        '<div class="evidence" style="margin-top:8px"><strong>BLOCKED</strong> · ' +
+        esc(item.code) + '<br><small>' + esc(item.url) +
+        '<br>' + esc(item.error) + '</small></div>'
+      ).join('');
+    }
+  }
+
+  async function loadFreshnessStatus() {
+    try {
+      const response = await request('/api/status');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Runtime status load failed');
+
+      const runtime = data.runtime || {};
+      const history = runtime.storage || 'unknown';
+      const identity = runtime.identity?.authentication || 'unknown';
+      const outbox = runtime.alertOutbox?.durable ? 'durable' : 'non-durable';
+      const delivery = runtime.alertDelivery?.configured ? 'provider-backed' : 'not-configured';
+      const schedule = runtime.monitorScheduleStorage?.durable ? 'durable' : 'non-durable';
+      const sources = Array.isArray(runtime.monitoredSources) ? runtime.monitoredSources.length : 0;
+
+      const el = document.getElementById('freshnessInfrastructure');
+      if (el) {
+        el.innerHTML =
+          '<strong>Infrastructure snapshot</strong><br><small>' +
+          'History: ' + esc(history) +
+          ' · Identity: ' + esc(identity) +
+          ' · Outbox: ' + esc(outbox) +
+          ' · Delivery: ' + esc(delivery) +
+          ' · Schedules: ' + esc(schedule) +
+          ' · Sources: ' + sources +
+          '<br>Autonomous discovery: NOT CLAIMED · Batch recheck: enabled · Max batch: 10' +
+          '</small>';
+      }
+    } catch (error) {
+      freshnessPanelState('Infrastructure status unavailable: ' + error.message);
+    }
+  }
+
+  async function refreshVisibleSources() {
+    const urls = visibleSourceUrls();
+    if (!urls.length) {
+      freshnessPanelState('No visible source links to refresh.');
+      return;
+    }
+
+    const button = document.getElementById('refreshVisibleSourcesBtn');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Refreshing…';
+    }
+
+    freshnessPanelState('SOURCE → RECHECK → EVIDENCE → STATUS…');
+
+    try {
+      const response = await request('/api/recheck-batch', {
+        method: 'POST',
+        body: JSON.stringify({ urls })
+      });
+      const report = await response.json();
+      if (!response.ok) throw new Error(report.error || 'Batch refresh failed');
+
+      renderRefreshResults(report);
+      freshnessPanelState(
+        'Batch complete · requested ' + report.requested +
+        ' · refreshed ' + report.accepted +
+        ' · blocked ' + report.blocked +
+        ' · durable history: ' + (report.durable ? 'yes' : 'no')
+      );
+    } catch (error) {
+      freshnessPanelState('Batch refresh failed: ' + error.message);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Refresh visible sources';
+      }
+    }
+  }
+
   function renderSources(sources) {
     const box = document.getElementById('monitorScheduleSources');
     if (!box) return;
@@ -193,6 +314,12 @@
     button.textContent = 'Monitoring schedules';
     controls.appendChild(button);
 
+    const freshnessButton = document.createElement('button');
+    freshnessButton.id = 'freshnessControlBtn';
+    freshnessButton.className = 'save-search';
+    freshnessButton.textContent = 'Freshness control';
+    controls.appendChild(freshnessButton);
+
     const panel = document.createElement('div');
     panel.id = 'monitorSchedulesPanel';
     panel.className = 'notice';
@@ -214,6 +341,15 @@
       '<div id="monitorScheduleState" class="result">Not connected.</div>';
 
     syncState.parentNode.insertBefore(panel, syncState.nextSibling);
+    syncState.parentNode.insertBefore(freshnessPanel, panel.nextSibling);
+
+    freshnessButton.addEventListener('click', () => {
+      freshnessPanel.style.display = freshnessPanel.style.display === 'none' ? 'block' : 'none';
+      if (freshnessPanel.style.display !== 'none') loadFreshnessStatus();
+    });
+
+    document.getElementById('refreshVisibleSourcesBtn').addEventListener('click', refreshVisibleSources);
+    document.getElementById('refreshFreshnessStatusBtn').addEventListener('click', loadFreshnessStatus);
 
     button.addEventListener('click', () => {
       panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
