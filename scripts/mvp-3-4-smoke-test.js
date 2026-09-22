@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { MAX_URLS, normalizeInputUrls, runBatch } = require('../api/recheck-batch');
+const { MAX_URLS, normalizeInputUrls, runBatch } = require('../api/recheck-one');
 
 assert.equal(MAX_URLS, 10);
 assert.deepEqual(
