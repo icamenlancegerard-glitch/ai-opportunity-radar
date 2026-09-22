@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 3.2 — evidence-first opportunity monitoring**
+**MVP 3.4 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -50,6 +50,16 @@ HTTP reachability, availability evidence, eligibility evidence, compensation evi
 - **Unknown:** missing or invalid check date
 
 Freshness is a prioritization signal, not a truth claim.
+
+## MVP 3.4 — freshness control
+
+MVP 3.4 adds bounded batch evidence recheck to the existing `/api/recheck-one` endpoint. A POST request may provide up to 10 source URLs in `urls`; each URL is canonicalized and rechecked through the same source-policy and evidence pipeline used by single-source rechecks.
+
+The browser UI exposes **Freshness Control** for refreshing the currently visible source links and for inspecting runtime/provider readiness.
+
+This release deliberately does **not** claim autonomous search-result ingestion. Discovery search links remain discovery signals until a candidate is explicitly inspected through the evidence gate.
+
+The Vercel Hobby deployment limit is respected by consolidating batch behavior into an existing serverless function rather than adding another API function.
 
 ## Historical early roadmap
 1. Connect a real durable history provider for production monitoring
