@@ -3,7 +3,7 @@
 // It does not contact providers and does not claim durability.
 const REQUIRED = [
   'RADAR_SUPABASE_URL',
-  'RADAR_SUPABASE_SERVICE_ROLE_KEY',
+  'RADAR_SUPABASE_SECRET_KEY',
   'RESEND_API_KEY',
   'RADAR_ALERT_FROM',
   'RADAR_ALERT_TO'
@@ -12,6 +12,10 @@ const REQUIRED = [
 function getReadiness(env = process.env) {
   const configured = Object.fromEntries(
     REQUIRED.map((key) => [key, Boolean(typeof env[key] === 'string' && env[key].trim())])
+  );
+  // Backward compatibility: legacy service_role still works during migration.
+  configured.RADAR_SUPABASE_SERVICE_ROLE_KEY = Boolean(
+    typeof env.RADAR_SUPABASE_SERVICE_ROLE_KEY === 'string' && env.RADAR_SUPABASE_SERVICE_ROLE_KEY.trim()
   );
 
   const httpsSupabase = (() => {
@@ -23,7 +27,7 @@ function getReadiness(env = process.env) {
   })();
 
   const historyReady = configured.RADAR_SUPABASE_URL &&
-    configured.RADAR_SUPABASE_SERVICE_ROLE_KEY &&
+    (configured.RADAR_SUPABASE_SECRET_KEY || configured.RADAR_SUPABASE_SERVICE_ROLE_KEY) &&
     httpsSupabase;
 
   const deliveryReady = configured.RESEND_API_KEY &&
@@ -44,7 +48,7 @@ function getReadiness(env = process.env) {
       durableAlertOutbox: historyReady ? 'configured_only' : 'not_verified',
       externalEmailDelivery: deliveryReady ? 'configured_only' : 'not_verified'
     },
-    note: 'Configuration is not the same as provider exercise. Run scripts/provider-exercise.js with explicit confirmation only after the real providers are intentionally configured.'
+    note: 'Configuration is not the same as provider exercise. Run scripts/history-provider-exercise.js with explicit confirmation only after the real Supabase provider is intentionally configured.'
   };
 }
 
