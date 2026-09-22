@@ -5,11 +5,13 @@ const assert = require('node:assert/strict');
 const { getHistoryStore, getHistoryStorageStatus } = require('../lib/history-store');
 
 function requireConfig() {
-  const missing = ['RADAR_SUPABASE_URL', 'RADAR_SUPABASE_SERVICE_ROLE_KEY']
-    .filter((key) => !process.env[key]);
+  const missing = ['RADAR_SUPABASE_URL'].filter((key) => !process.env[key]);
+  const hasSecretKey = Boolean(process.env.RADAR_SUPABASE_SECRET_KEY);
+  const hasLegacyKey = Boolean(process.env.RADAR_SUPABASE_SERVICE_ROLE_KEY);
 
-  if (missing.length) {
-    throw new Error('Missing Supabase configuration: ' + missing.join(', '));
+  if (missing.length || (!hasSecretKey && !hasLegacyKey)) {
+    const details = missing.concat(!hasSecretKey && !hasLegacyKey ? ['RADAR_SUPABASE_SECRET_KEY (or legacy RADAR_SUPABASE_SERVICE_ROLE_KEY)'] : []);
+    throw new Error('Missing Supabase configuration: ' + details.join(', '));
   }
 
   if (process.env.RADAR_HISTORY_EXERCISE_CONFIRM !== 'YES') {
