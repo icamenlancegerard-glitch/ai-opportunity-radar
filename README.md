@@ -51,6 +51,16 @@ HTTP reachability, availability evidence, eligibility evidence, compensation evi
 
 Freshness is a prioritization signal, not a truth claim.
 
+## Provider setup — MVP 3.5A
+
+1. In Supabase, create/select the Radar project and run `supabase/mvp-2-8.sql` in the SQL editor. This creates the private `radar_history` and alert-event tables.
+2. In Supabase, obtain the Project URL and a server-side **secret** key from the project Connect/API-key area. Supabase documents the newer secret key as the replacement for legacy `service_role`; legacy support remains temporarily for migration.
+3. In Vercel, open the Radar project → Settings → Environment Variables and add `RADAR_SUPABASE_URL` and `RADAR_SUPABASE_SECRET_KEY` for Preview first. Redeploy afterward so the variables take effect.
+4. Open the latest preview `/api/status`. The readiness block should show `historyProviderConfigured: true` and the storage should no longer report `memory-only`.
+5. Only after that, run `scripts/history-provider-exercise.js` with `RADAR_HISTORY_EXERCISE_CONFIRM=YES`. It writes one synthetic record, reads it back, and lists it; it does not send email.
+
+Never paste the Supabase secret into chat or commit it to Git. Vercel environment variables are the intended secret boundary.
+
 ## MVP 3.5 — durable provider readiness
 
 MVP 3.5 adds a safe provider-readiness preflight through `scripts/provider-readiness.js`. It checks whether the required Supabase and Resend environment variables are present with an HTTPS Supabase URL, without printing secrets or contacting providers.
