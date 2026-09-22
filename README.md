@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 3.4 — evidence-first opportunity monitoring**
+**MVP 3.5 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
@@ -50,6 +50,14 @@ HTTP reachability, availability evidence, eligibility evidence, compensation evi
 - **Unknown:** missing or invalid check date
 
 Freshness is a prioritization signal, not a truth claim.
+
+## MVP 3.5 — durable provider readiness
+
+MVP 3.5 adds a safe provider-readiness preflight through `scripts/provider-readiness.js`. It checks whether the required Supabase and Resend environment variables are present with an HTTPS Supabase URL, without printing secrets or contacting providers.
+
+The existing `scripts/provider-exercise.js` remains the verification gate. It intentionally requires `RADAR_PROVIDER_EXERCISE_CONFIRM=YES` because the exercise writes a real history/outbox record and sends one real email.
+
+Current production verification remains explicit: configured is not the same as exercised, and memory-only runtime is not treated as durable.
 
 ## MVP 3.4 — freshness control
 
