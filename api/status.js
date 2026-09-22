@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
       alertDelivery: getAlertDeliveryStatus(),
       alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
       scheduledMonitor: { enabled: true, monitoredSources: getMonitoredSources().length, cronPath: '/api/monitor' },
-      freshnessControl: { enabled: true, batchPath: '/api/recheck-batch', maxUrls: 10, autonomousDiscovery: false },
+      freshnessControl: { enabled: true, batchPath: '/api/recheck-one', batchMode: 'POST { urls }', maxUrls: 10, autonomousDiscovery: false },
       monitoredSourceLifecycle: getMonitoredSourceStatus(),
       monitoredSources: getMonitoredSources({ includeInactive: true }),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
