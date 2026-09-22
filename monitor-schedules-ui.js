@@ -131,7 +131,7 @@
     freshnessPanelState('SOURCE → RECHECK → EVIDENCE → STATUS…');
 
     try {
-      const response = await request('/api/recheck-batch', {
+      const response = await request('/api/recheck-one', {
         method: 'POST',
         body: JSON.stringify({ urls })
       });
