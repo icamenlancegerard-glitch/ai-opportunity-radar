@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '3.1',
+    version: '3.4',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -46,6 +46,7 @@ module.exports = async (req, res) => {
       alertDelivery: getAlertDeliveryStatus(),
       alertDeliveryWorker: { enabled: true, path: '/api/alert-worker', requiresCronSecret: true },
       scheduledMonitor: { enabled: true, monitoredSources: getMonitoredSources().length, cronPath: '/api/monitor' },
+      freshnessControl: { enabled: true, batchPath: '/api/recheck-batch', maxUrls: 10, autonomousDiscovery: false },
       monitoredSourceLifecycle: getMonitoredSourceStatus(),
       monitoredSources: getMonitoredSources({ includeInactive: true }),
       savedSearchContract: typeof validateSavedSearch === 'function' && typeof matchesSavedSearch === 'function',
@@ -72,6 +73,7 @@ module.exports = async (req, res) => {
       alertPreferences: 'browser-local-fallback',
       authenticatedAlertSubscriptions: getAlertSubscriptionStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
       userMonitoringSchedules: getMonitorScheduleStorageStatus().durable ? 'durable-provider-configured' : 'not_verified',
+      freshnessControl: 'configured',
       evidenceTimeline: 'configured',
       providerPack: { history: getHistoryStorageStatus(), alertOutbox: getAlertOutboxStatus(), alertDelivery: getAlertDeliveryStatus() },
       jobAvailability: 'not_verified',
@@ -79,6 +81,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 3.1 adds authenticated user-owned monitoring schedules on top of the MVP 3.0 subscription and identity boundaries. Schedule execution remains bounded by the platform scheduler tick.'
+    note: 'MVP 3.4 adds bounded batch evidence recheck and freshness-control tooling. It does not claim autonomous search-result ingestion or hiring truth.'
   });
 };
