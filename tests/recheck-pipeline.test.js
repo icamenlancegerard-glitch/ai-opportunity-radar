@@ -11,6 +11,15 @@ global.fetch = async () => ({ status, text: async () => body });
 (async () => {
   const store = createMemoryHistoryStore();
 
+const largePrefix = 'x'.repeat(40 * 1024);
+const largeBody = largePrefix + '<button>Apply now</button><div>Must be based in the Philippines.</div><div>PHP 50-100/hour</div>';
+status = 200;
+body = largeBody;
+const largeWindow = await checkSource('https://ph.indeed.com/viewjob?jk=large-window');
+assert.equal(largeWindow.availabilityEvidence.status, 'OPEN_EVIDENCE');
+assert.equal(largeWindow.eligibilityEvidence.status, 'PH_ELIGIBLE_EVIDENCE');
+assert.equal(largeWindow.compensationEvidence.status, 'COMPENSATION_EVIDENCE');
+
   const first = await recheckAndRecord('https://ph.indeed.com/viewjob?jk=abc#fragment', store);
   assert.equal(first.snapshot.url, 'https://ph.indeed.com/viewjob?jk=abc');
   assert.equal(first.snapshot.availabilityEvidence.status, 'OPEN_EVIDENCE');

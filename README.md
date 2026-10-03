@@ -1,6 +1,6 @@
 # AI Opportunity Radar
 
-**MVP 3.2 — evidence-first opportunity monitoring**
+**MVP 3.3 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
 
