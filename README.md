@@ -1,8 +1,16 @@
 # AI Opportunity Radar
 
-**MVP 3.2 — evidence-first opportunity monitoring**
+**MVP 3.3 — evidence-first opportunity monitoring**
 
 AI Opportunity Radar is a lightweight web prototype for finding AI-related work opportunities while keeping uncertainty visible.
+
+## Current runtime boundary — 2026-10-04
+
+The production deployment is live and its basic runtime status endpoint currently returns HTTP 200 with `ok: true`. Durable Supabase-backed history, alert outbox state, monitored-source lifecycle, and scheduled monitoring are configured.
+
+Authentication and external notification delivery are separate provider boundaries and are **not configured / not verified** in the current production environment. Marketplace truth (availability, Philippines eligibility, compensation, and continued hiring) remains **evidence-gated and not verified** until a source is freshly rechecked.
+
+Historical verification notes below refer to earlier deployment states. They are retained for traceability and should not be read as the current production status.
 
 ## Current MVP
 - Search by title, company, skill, or location
