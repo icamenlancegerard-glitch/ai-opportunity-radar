@@ -16,7 +16,7 @@ const { getMonitorScheduleStorageStatus } = require('../lib/monitor-schedule-sto
 const { getMonitoredSources, getMonitoredSourceStatus } = require('../lib/monitored-sources');
 const { checkSource, recheckAndRecord } = require('../lib/recheck-pipeline');
 
-// MVP 3.0 — public read-only runtime status.
+// MVP 3.3 — public read-only runtime status.
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
   return res.status(200).json({
     ok,
     service: 'ai-opportunity-radar',
-    version: '3.1',
+    version: '3.3',
     checkedAt: new Date().toISOString(),
     runtime: {
       availabilityEvidence: typeof classifyAvailability === 'function',
@@ -79,6 +79,6 @@ module.exports = async (req, res) => {
       compensation: 'not_verified',
       hiringStatus: 'not_verified'
     },
-    note: 'MVP 3.1 adds authenticated user-owned monitoring schedules on top of the MVP 3.0 subscription and identity boundaries. Schedule execution remains bounded by the platform scheduler tick.'
+    note: 'MVP 3.3 runtime status for the current evidence-first Radar build. Authentication and external notification delivery remain explicit provider configuration boundaries; evidence truth remains not_verified until a source is freshly rechecked.'
   });
 };
